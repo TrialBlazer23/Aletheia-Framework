@@ -11,6 +11,8 @@
 
 ---
 
+For the philosophy and origin story behind this architecture, see(VISION.md).
+
 ## Executive Summary
 
 Project Chimera proposes a robust architecture for **Enterprise-Grade AI Autonomy**. It moves beyond the "Black Box" problem of monolithic LLMs by decomposing intelligence into a federation of specialized, auditable agents.
