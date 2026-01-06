@@ -78,7 +78,7 @@ The system does not just log errors; it learns from them.
 ### Prerequisites
 
 * Python 3.10+
-* Spacy (`en_core_web_sm`)
+* Spacy (`en_core_web_lg`)
 * Message Bus (RabbitMQ or Redis)
 * Vector Database (Pinecone, Weaviate, or similar)
 * LLM API (OpenAI, Anthropic, or local via Ollama)

@@ -22,16 +22,18 @@ This roadmap prioritizes **incremental delivery** over "big bang" implementation
 ### Deliverables
 
 #### 1. Technology Stack Selection
+
 **Recommended:**
-```yaml
-Language: Python 3.10+
-Message Bus: RabbitMQ or Redis Streams
-API Framework: FastAPI
-Data Store: PostgreSQL + Redis (cache)
-Monitoring: Prometheus + Grafana
-Tracing: OpenTelemetry + Jaeger
-Containerization: Docker + Docker Compose
-```
+
+| Component | Technology |
+|-----------|------------|
+| Language | Python 3.10+ |
+| Message Bus | RabbitMQ or Redis Streams |
+| API Framework | FastAPI |
+| Data Store | PostgreSQL + Redis (cache) |
+| Monitoring | Prometheus + Grafana |
+| Tracing | OpenTelemetry + Jaeger |
+| Containerization | Docker + Docker Compose |
 
 **Rationale:**
 - Python: Broad LLM library support (OpenAI, Anthropic, LangChain)
@@ -843,4 +845,4 @@ Ship Phase 1 in 4 months. Learn. Iterate. Scale.
 
 **Document Prepared By:** AI Implementation Architect  
 **Confidence Level:** High (based on industry best practices for distributed AI systems)  
-**Recommendation:** Begin with Phase 0-1, validate assumptions before committing to full 2-year timeline
+**Recommendation:** Begin with Phase 0-1, validate assumptions before committing to full 2-year timeline.
