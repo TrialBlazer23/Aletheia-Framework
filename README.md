@@ -7,6 +7,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status: Experimental](https://img.shields.io/badge/Status-Experimental-red.svg)]()
 [![Architecture: Neuro-Symbolic](https://img.shields.io/badge/Architecture-Neuro--Symbolic-blueviolet.svg)]()
+[![Implementation: Pre-Alpha](https://img.shields.io/badge/Implementation-Pre--Alpha-orange.svg)]()
+
+> **Current Status (January 2026):** This repository contains comprehensive architectural documentation and design specifications. Active implementation has not yet begun. See [QUICK_ASSESSMENT.md](QUICK_ASSESSMENT.md) for feasibility analysis and [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md) for development plans.
 
 > **The Philosophy:** Current AI models are Black Boxes. Aletheia is a **Glass Box**. It separates *Generation* (The Narrator) from *Judgment* (The Philosopher) to create agents that are safe, auditable, and capable of recursive self-improvement.
 > *Read the origin story and architectural thesis in [VISION.md](VISION.md).*
@@ -47,24 +50,49 @@ The system does not just log errors; it learns from them.
 
 ---
 
-## 🚀 Getting Started
+## 📊 Project Analysis & Roadmap
+
+**Status: Pre-Implementation Phase** - This repository contains comprehensive architectural documentation. Implementation has not yet begun.
+
+### Available Documentation
+
+* **[QUICK_ASSESSMENT.md](QUICK_ASSESSMENT.md)** - Executive summary and feasibility analysis (5 min read)
+* **[ANALYSIS.md](ANALYSIS.md)** - Comprehensive technical review of the architecture, strengths, challenges, and recommendations (20 min read)
+* **[IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md)** - Phased implementation plan with timelines, resource requirements, and code examples (30 min read)
+
+### Key Findings
+
+✅ **Core architecture is viable** - Multi-agent orchestration and event-driven workflows are proven patterns  
+✅ **Safety-first design is innovative** - Dedicated validation agent (The Philosopher) is architecturally sound  
+⚠️ **Requires staged implementation** - Build MVP (3-agent system) before attempting full Resonance Cycle  
+⚠️ **Research components need caution** - Self-modifying AI should start with human-supervised parameter tuning  
+
+**Recommendation:** Proceed with phased implementation starting with a 3-agent prototype (Nexus-Mind, Archivist, Narrator). Estimated timeline to production-ready system: 18-24 months.
+
+---
+
+## 🚀 Getting Started (Future Implementation)
+
+**Note:** The implementation described below does not yet exist. See [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md) for development plans.
 
 ### Prerequisites
 
 * Python 3.10+
-* Spacy (`en_core_web_sm`)
-* Ollama (for local inference) or OpenAI API Key
+* Spacy (`en_core_web_lg`)
+* Message Bus (RabbitMQ or Redis)
+* Vector Database (Pinecone, Weaviate, or similar)
+* LLM API (OpenAI, Anthropic, or local via Ollama)
 
-### Installation
+### Installation (Planned)
 
 ```bash
 git clone https://github.com/TrialBlazer23/Aletheia-Framework.git
 cd Aletheia-Framework
 pip install -r requirements.txt
-python -m spacy download en_core_web_sm
+python -m spacy download en_core_web_lg
 ```
 
-### Running the Prototype
+### Running the Prototype (Planned)
 
 To launch the `Nexus-Mind` console:
 ```bash
@@ -75,10 +103,14 @@ python main.py
 
 ## 📂 Repository Structure
 
-* `/core`: The Python implementation of the agents (Archivist, Philosopher, etc.).
-* `/standards`: JSON Schemas for **SDR** (Structured Data Representation).
-* `/policies`: The default "Prime Directives" and Operational Policies.
-* `/docs`: Detailed architectural diagrams and RFCs.
+* `/Architecture`: Detailed specifications for Core Models, Coordination, and Memory/Learning systems
+* `/Standards`: Protocol specifications including Synapse Protocol, Interface Layer, and Data Representation
+* `/RFCs`: Proposed and draft specifications for system enhancements
+* `/Safety_Protocols`: Prime Directives and safety framework definitions
+* **Analysis Documents:**
+  * `ANALYSIS.md` - Comprehensive feasibility and technical assessment
+  * `QUICK_ASSESSMENT.md` - Executive summary and recommendations  
+  * `IMPLEMENTATION_ROADMAP.md` - Phased development plan with timelines
 
 ---
 
