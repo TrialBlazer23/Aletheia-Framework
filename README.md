@@ -5,6 +5,8 @@
 [![Status: Design Proposal](https://img.shields.io/badge/Status-Design%20Proposal-blue.svg)]()
 [![Architecture: Neuro-Symbolic](https://img.shields.io/badge/Architecture-Neuro--Symbolic-blueviolet.svg)]()
 
+> **Quick Start**: For a concise overview of this entire proposal, read [DESIGN_PROPOSAL_SUMMARY.md](DESIGN_PROPOSAL_SUMMARY.md) (10 min)
+
 ---
 
 ## Executive Summary
