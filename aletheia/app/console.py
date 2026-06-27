@@ -3,7 +3,8 @@
 Run with ``python -m aletheia.app.console`` (or ``python main.py``). Ask
 questions about Aletheia's own design; watch the answer come back grounded in
 the docs, with its sources and a confidence score. Type ``/log`` to see the
-Domino Cascade for the last question, ``/quit`` to exit.
+Domino Cascade for the last question, ``/health`` for the Diagnostician's view
+of cascade health, ``/quit`` to exit.
 """
 
 from __future__ import annotations
@@ -23,7 +24,8 @@ async def _run() -> None:
         f"  · Philosopher enforcing {len(system.philosopher.directives.directives)} "
         f"Prime Directives ({len(system.philosopher.directives.rules)} rules)."
     )
-    print("\nAsk a question about Aletheia. Commands: /log  /quit\n")
+    print("  · Diagnostician monitoring the bus (loops / stalls / circuit breaker).")
+    print("\nAsk a question about Aletheia. Commands: /log  /health  /quit\n")
 
     last_seq = 0
     while True:
@@ -38,6 +40,11 @@ async def _run() -> None:
             break
         if question == "/log":
             print(system.cascade_log.pretty() or "  (cascade log is empty)")
+            continue
+        if question == "/health":
+            print("Diagnostician — cascade health:")
+            print(system.diagnostician.pretty_health())
+            print()
             continue
 
         before = len(system.cascade_log.entries)

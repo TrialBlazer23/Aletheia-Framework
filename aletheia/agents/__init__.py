@@ -2,11 +2,12 @@
 
 Milestone 0 shipped the ``FamilyMember`` base (SIL wiring + handshake).
 Milestone 1 adds the first three living agents — Nexus-Mind, Archivist, Narrator.
-The Philosopher, Diagnostician, and Visionary arrive in later milestones per
-ROADMAP.md.
+Milestone 2 adds the Philosopher; Milestone 3 adds the Diagnostician. The
+Visionary arrives in a later milestone per ROADMAP.md.
 """
 
 from aletheia.agents.archivist import Archivist
+from aletheia.agents.diagnostician import Diagnostician
 from aletheia.agents.family import (
     ARCHIVIST_UID,
     DIAGNOSTICIAN_UID,
@@ -27,6 +28,7 @@ __all__ = [
     "Archivist",
     "Narrator",
     "Philosopher",
+    "Diagnostician",
     "NEXUS_MIND_UID",
     "ARCHIVIST_UID",
     "NARRATOR_UID",

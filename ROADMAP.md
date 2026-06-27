@@ -99,7 +99,7 @@ Each milestone is **independently demoable**. We do them in order; each one is a
 
 ---
 
-### Milestone 3 — The Immune System (Diagnostician + observability)
+### Milestone 3 — The Immune System (Diagnostician + observability) — ✅ DONE
 *The system watches itself and heals.*
 
 - **Diagnostician** `0x00E5`: monitors the bus, tracks every in-flight cascade by a correlation/choreography ID, detects loops and timeouts, emits `STATE_CHANGE` alerts, and trips a **circuit breaker** on runaway cascades.

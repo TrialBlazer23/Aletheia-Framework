@@ -10,11 +10,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from aletheia.agents.archivist import Archivist
+from aletheia.agents.diagnostician import Diagnostician
 from aletheia.agents.narrator import Narrator
 from aletheia.agents.nexus_mind import NexusMind, QAResult
 from aletheia.agents.philosopher import Philosopher
 from aletheia.bus.in_process import InProcessBus
 from aletheia.config import load_local_env
+from aletheia.diagnostics.circuit_breaker import CircuitBreaker
 from aletheia.llm.base import LLMProvider
 from aletheia.llm.factory import get_default_provider
 from aletheia.log.cascade_log import CascadeLog
@@ -35,7 +37,11 @@ class QASystem:
         cascade_log: CascadeLog | None = None,
     ) -> None:
         self.cascade_log = cascade_log or CascadeLog(path="cascade_log.jsonl")
-        self.bus = InProcessBus(cascade_log=self.cascade_log)
+        # The circuit breaker the Diagnostician trips; the bus consults it.
+        self.circuit_breaker = CircuitBreaker()
+        self.bus = InProcessBus(
+            cascade_log=self.cascade_log, circuit_breaker=self.circuit_breaker
+        )
         self.assets = AssetStore()
         # Pick up a key from a local .env file (no-op if absent) before choosing
         # the provider. An explicitly-passed llm skips provider selection entirely.
@@ -51,7 +57,20 @@ class QASystem:
         self.narrator = Narrator(bus=self.bus, llm=self.llm, asset_store=self.assets)
         # The Philosopher sits between the Narrator and the user, with veto power.
         self.philosopher = Philosopher(bus=self.bus, asset_store=self.assets)
-        for agent in (self.nexus, self.archivist, self.narrator, self.philosopher):
+        # The Diagnostician watches the whole bus, building CHOREOGRAPHY_LOG
+        # telemetry for every turn and standing ready to trip the breaker on a
+        # runaway. It is a passive observer in the healthy path — it adds no
+        # traffic to a normal cascade, so it never perturbs the flow it measures.
+        self.diagnostician = Diagnostician(
+            bus=self.bus, asset_store=self.assets, circuit_breaker=self.circuit_breaker
+        )
+        for agent in (
+            self.nexus,
+            self.archivist,
+            self.narrator,
+            self.philosopher,
+            self.diagnostician,
+        ):
             agent.connect()
 
     # --- corpus ------------------------------------------------------------ #
