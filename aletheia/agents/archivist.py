@@ -22,7 +22,7 @@ Everything stays behind interfaces (``VectorStore``, ``GraphStore``,
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aletheia.agents.family import ARCHIVIST_UID
 from aletheia.agents.family_member import FamilyMember
@@ -42,6 +42,9 @@ from aletheia.sdr.primitives import (
     SdrTextBlock,
 )
 
+if TYPE_CHECKING:  # the Archivist reads the policy but never imports resonance
+    from aletheia.resonance.policy import OperationalPolicy, PolicyStore
+
 TOP_K = 4
 MAX_FACTS = 6  # cap the facts we surface per turn so the payload stays lean
 
@@ -55,12 +58,17 @@ class Archivist(FamilyMember):
         asset_store: AssetStore,
         graph_store: GraphStore | None = None,
         extractor: KnowledgeExtractor | None = None,
+        policy_store: "PolicyStore | None" = None,
     ) -> None:
         super().__init__(name="Archivist", uid=ARCHIVIST_UID, bus=bus)
         self._vectors = vector_store
         self._assets = asset_store
         self._graph = graph_store
         self._extractor = extractor
+        # The operational policy the Archivist obeys at retrieval time. Read live
+        # (via the store) so a Resonance policy change — or rollback — takes
+        # effect immediately, with no re-ingest.
+        self._policy_store = policy_store
 
     # --- ingestion --------------------------------------------------------- #
     def build_graph(self, documents: list[Document]) -> int:
@@ -128,16 +136,47 @@ class Archivist(FamilyMember):
             confidence_score=top_score,
         )
 
+    def _current_policy(self) -> "OperationalPolicy | None":
+        return self._policy_store.current if self._policy_store is not None else None
+
+    def _facts_under_policy(self, policy: "OperationalPolicy | None", question: str):
+        """The graph facts that would ground an answer under ``policy``.
+
+        Over-fetches, drops policy-distrusted sources, then caps at ``MAX_FACTS``
+        — the single source of truth for "what facts survive the policy", used by
+        both live retrieval and the sandbox probe so they can never diverge.
+        """
+        if self._graph is None:
+            return []
+        kept = []
+        for gf in self._graph.find_facts(question, limit=MAX_FACTS * 3):
+            if policy is not None and policy.distrusts(gf.source):
+                continue
+            kept.append(gf)
+            if len(kept) >= MAX_FACTS:
+                break
+        return kept
+
     def _retrieve_passages(self, question: str) -> list[SdrSourcePassage]:
-        results = self._vectors.query(question, top_k=TOP_K)
-        return [
-            SdrSourcePassage(
-                text=SdrTextBlock(text=r.text),
-                data_source=r.metadata.get("source", "unknown"),
-                confidence=SdrConfidenceScore(score=r.score),
+        policy = self._current_policy()
+        # Over-fetch so distrusting the top hits doesn't silently shrink the
+        # result below the cap when trusted passages exist lower down.
+        results = self._vectors.query(question, top_k=TOP_K * 3)
+        passages = []
+        for r in results:
+            source = r.metadata.get("source", "unknown")
+            if policy is not None and policy.distrusts(source):
+                continue  # an operational-policy decision: don't ground on this source
+            passages.append(
+                SdrSourcePassage(
+                    text=SdrTextBlock(text=r.text),
+                    data_source=source,
+                    confidence=SdrConfidenceScore(score=r.score),
+                )
             )
-            for r in results
-        ]
+            if len(passages) >= TOP_K:
+                break
+        return passages
 
     def _retrieve_facts(self, question: str) -> list[SdrFactAssertion]:
         """Traverse the graph for the facts most relevant to the question.
@@ -145,10 +184,8 @@ class Archivist(FamilyMember):
         Delegates ranking to the graph (relation match counts double, entity
         match once), so a relational query lands on the relation it asked about —
         e.g. "what does the Philosopher enforce?" → the *enforce* fact — with its
-        source attached.
+        source attached. Facts from a policy-distrusted source are dropped.
         """
-        if self._graph is None:
-            return []
         return [
             SdrFactAssertion(
                 subject=gf.subject,
@@ -159,5 +196,15 @@ class Archivist(FamilyMember):
                 confidence=SdrConfidenceScore(score=gf.confidence),
                 metadata=SdrMetadataBlock(source_uid=self.uid, owning_model_uid=self.uid),
             )
-            for gf in self._graph.find_facts(question, limit=MAX_FACTS)
+            for gf in self._facts_under_policy(self._current_policy(), question)
         ]
+
+    def retrieve_sources_under(self, policy: "OperationalPolicy", question: str) -> list[str]:
+        """The fact sources that would ground an answer under a hypothetical policy.
+
+        Read-only and side-effect-free — the probe the Resonance Sandbox uses to
+        simulate a candidate policy. Shares ``_facts_under_policy`` with live
+        retrieval (same over-fetch and ``MAX_FACTS`` cap) so the simulation can't
+        diverge from what the live system would actually ground on.
+        """
+        return [gf.source for gf in self._facts_under_policy(policy, question)]

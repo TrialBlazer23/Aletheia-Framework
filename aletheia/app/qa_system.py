@@ -27,6 +27,20 @@ from aletheia.memory.corpus import Document, load_markdown_corpus
 from aletheia.memory.extractor import KnowledgeExtractor, get_default_extractor
 from aletheia.memory.graph_store import GraphStore, get_default_graph_store
 from aletheia.memory.vector_store import TfidfVectorStore, VectorStore
+from aletheia.resonance.analytics import Feedback, PerformanceAnalyzer
+from aletheia.resonance.engine import (
+    CallbackGavel,
+    HumanGavel,
+    ResonanceEngine,
+    ResonanceOutcome,
+)
+from aletheia.resonance.policy import PolicyStore
+from aletheia.resonance.sandbox import ResonanceSandbox
+from aletheia.sdr.primitives import (
+    AnswerAsset,
+    RetrievedContextAsset,
+    SdrEthicalAnalysisReport,
+)
 
 # The repository root — used to ingest Aletheia's own docs as the default corpus.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -42,6 +56,8 @@ class QASystem:
         graph_store: GraphStore | None = None,
         extractor: KnowledgeExtractor | None = None,
         use_graph: bool = True,
+        policy_store: PolicyStore | None = None,
+        gavel: HumanGavel | None = None,
     ) -> None:
         self.cascade_log = cascade_log or CascadeLog(path="cascade_log.jsonl")
         # The circuit breaker the Diagnostician trips; the bus consults it.
@@ -66,6 +82,10 @@ class QASystem:
             self.graph = None
             self.extractor = None
 
+        # The versioned operational policy the Resonance Cycle tunes (and that the
+        # Archivist obeys at retrieval time). In-memory by default for tests/demos.
+        self.policy = policy_store or PolicyStore(path=None)
+
         self.nexus = NexusMind(bus=self.bus, asset_store=self.assets)
         self.archivist = Archivist(
             bus=self.bus,
@@ -73,6 +93,7 @@ class QASystem:
             asset_store=self.assets,
             graph_store=self.graph,
             extractor=self.extractor,
+            policy_store=self.policy,
         )
         self.narrator = Narrator(bus=self.bus, llm=self.llm, asset_store=self.assets)
         # The Philosopher sits between the Narrator and the user, with veto power.
@@ -93,6 +114,24 @@ class QASystem:
         ):
             agent.connect()
 
+        # The Resonance Cycle (Milestone 5): supervised self-improvement. The
+        # sandbox probes the Archivist read-only under a candidate policy; the
+        # Philosopher verifies; the Human Gavel approves (default: a callback that
+        # *denies* — nothing self-modifies without an explicit yes).
+        self.analyzer = PerformanceAnalyzer()
+        self.sandbox = ResonanceSandbox(self.archivist.retrieve_sources_under)
+        self.gavel = gavel or CallbackGavel(lambda **_: False)
+        self.resonance = ResonanceEngine(
+            policy_store=self.policy,
+            philosopher=self.philosopher,
+            sandbox=self.sandbox,
+            gavel=self.gavel,
+            analyzer=self.analyzer,
+            bus=self.bus,
+            asset_store=self.assets,
+            control_questions=["What is Aletheia?", "What does the Philosopher enforce?"],
+        )
+
     # --- corpus ------------------------------------------------------------ #
     def ingest(self, documents: list[Document]) -> int:
         """Index documents for vector search *and* build the knowledge graph."""
@@ -107,3 +146,55 @@ class QASystem:
     # --- the cascade ------------------------------------------------------- #
     async def ask(self, question: str) -> QAResult:
         return await self.nexus.ask(question)
+
+    # --- the Resonance Cycle (supervised self-improvement) ----------------- #
+    async def submit_feedback(
+        self, *, turn_id: str, question: str, rating: str, note: str = ""
+    ) -> ResonanceOutcome:
+        """Feed a user verdict on a past turn into the Resonance Cycle.
+
+        Gathers that turn's telemetry (answer, retrieved context, choreography,
+        ethical verdict) and runs the four-phase cycle: dissonance → root cause →
+        verified proposal → Human Gavel. The post-deploy evaluator re-probes the
+        Archivist so the engine can auto-roll-back if the change didn't help.
+        """
+        feedback = Feedback(turn_id=turn_id, rating=rating, note=note)
+        answer = self._asset_for_turn(turn_id, AnswerAsset)
+        context = self._asset_for_turn(turn_id, RetrievedContextAsset)
+        ethical = self._asset_for_turn(turn_id, SdrEthicalAnalysisReport)
+        cascade = self.diagnostician.cascades.get(turn_id)
+        choreography = (
+            self.diagnostician.build_choreography(cascade) if cascade is not None else None
+        )
+        offending = self.analyzer.offending_source(answer, context)
+
+        def post_deploy_evaluator():
+            # After applying the fix, re-probe: if the offending source no longer
+            # grounds the failing answer, treat fidelity as restored.
+            still_present = offending in self.archivist.retrieve_sources_under(
+                self.policy.current, question
+            )
+            return self.analyzer.compute_indices(
+                choreography=choreography,
+                ethical_report=ethical,
+                answer=answer,
+                feedback=Feedback(turn_id, "INCORRECT" if still_present else "CORRECT"),
+            )
+
+        return await self.resonance.run_cycle(
+            feedback=feedback,
+            failing_question=question,
+            answer=answer,
+            context=context,
+            choreography=choreography,
+            ethical_report=ethical,
+            post_deploy_evaluator=post_deploy_evaluator,
+        )
+
+    def _asset_for_turn(self, turn_id: str, kind: type):
+        """Find the most recent asset of ``kind`` belonging to ``turn_id``."""
+        match = None
+        for asset in self.assets._assets.values():  # type: ignore[attr-defined]
+            if isinstance(asset, kind) and getattr(asset, "turn_id", None) == turn_id:
+                match = asset
+        return match

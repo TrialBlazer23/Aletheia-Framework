@@ -18,7 +18,7 @@ Rule-based is the hard floor. An LLM-assisted pass over the subtler directives
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aletheia.agents.family import NARRATOR_UID, PHILOSOPHER_UID
 from aletheia.agents.family_member import FamilyMember
@@ -33,9 +33,17 @@ from aletheia.sdr.primitives import (
     SdrDirectiveViolation,
     SdrEthicalAnalysisReport,
     SdrMetadataBlock,
+    SdrPolicyModificationProposal,
     SdrTextBlock,
+    SdrVerificationResult,
 )
 from aletheia.sil.interest_profile import InterestProfile, InterestRule
+
+if TYPE_CHECKING:  # avoid an import cycle: resonance imports the Philosopher
+    from aletheia.resonance.sandbox import SandboxResult
+
+# Directive #1 — the one a careless self-modification is most likely to breach.
+_SANCTITY_OF_INFORMATION = "The Sanctity of Information Flow"
 
 # Severities that trigger a veto (everything else is a non-blocking flag).
 _VETO_SEVERITIES = {"CRITICAL", "HIGH"}
@@ -113,6 +121,79 @@ class Philosopher(FamilyMember):
                 description=f"VETO — violates {vetoes[0].directive_name}.",
                 confidence_score=1.0,
             )
+
+    # --- Runtime Safety Kernel: verify a Resonance policy proposal --------- #
+    def verify_policy_proposal(
+        self,
+        proposal: SdrPolicyModificationProposal,
+        sandbox_result: "SandboxResult",
+    ) -> SdrVerificationResult:
+        """Gate a self-improvement proposal (RFC-001 §3.3, NSAP-ARCH-003 §4).
+
+        The Philosopher is the Runtime Safety Kernel: no policy change reaches the
+        Human Gavel without passing here. Two hard gates, rule-based (the floor):
+
+        * **Soundness** — the sandbox must show the change actually fixes the
+          fault. An ineffective change is rejected (don't mutate behaviour for
+          nothing).
+        * **Sanctity of Information Flow (Directive #1)** — if the sandbox shows
+          the change also suppresses *legitimate* sources, it is censorship by
+          another name and is vetoed, citing the directive.
+        """
+        if not sandbox_result.fix_effective:
+            return self._verification(
+                proposal,
+                status="REJECTED",
+                cited=None,
+                reasoning=(
+                    "Rejected: the sandbox shows the proposed change does not remove the "
+                    "flagged content, so it would alter behaviour without fixing the fault."
+                ),
+                sandbox=sandbox_result,
+            )
+        if sandbox_result.collateral_damage:
+            return self._verification(
+                proposal,
+                status="REJECTED",
+                cited=_SANCTITY_OF_INFORMATION,
+                reasoning=(
+                    "Rejected: the change is over-broad — the sandbox shows it would also "
+                    f"suppress legitimate sources ({', '.join(sandbox_result.suppressed_sources)}). "
+                    "Distrusting truthful information violates the Sanctity of Information Flow."
+                ),
+                sandbox=sandbox_result,
+            )
+        return self._verification(
+            proposal,
+            status="VERIFIED",
+            cited=None,
+            reasoning=(
+                "Verified: the change cleanly removes the flagged source from factual "
+                "grounding with no collateral suppression, preserving information integrity. "
+                "Cleared against the Prime Directives."
+            ),
+            sandbox=sandbox_result,
+        )
+
+    def _verification(
+        self,
+        proposal: SdrPolicyModificationProposal,
+        *,
+        status: str,
+        cited: str | None,
+        reasoning: str,
+        sandbox: "SandboxResult",
+    ) -> SdrVerificationResult:
+        return SdrVerificationResult(
+            turn_id=proposal.turn_id,
+            proposal_uid=proposal.synapse_uid,
+            status=status,
+            cited_directive=cited,
+            reasoning=SdrTextBlock(text=reasoning),
+            sandbox_summary=sandbox.summary,
+            confidence=SdrConfidenceScore(score=1.0),  # deterministic rule layer
+            metadata=SdrMetadataBlock(source_uid=self.uid, owning_model_uid=self.uid),
+        )
 
     @staticmethod
     def _to_sdr(v: Violation) -> SdrDirectiveViolation:

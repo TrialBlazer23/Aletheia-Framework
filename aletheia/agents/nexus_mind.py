@@ -40,6 +40,7 @@ class QAResult:
     directive: str | None = None  # the directive cited on a veto
     reason: str | None = None  # human-readable veto reason
     report_uid: str | None = None  # the SDR_Ethical_Analysis_Report, for audit
+    turn_id: str = ""  # threads the turn's asset chain; used to give feedback
 
 
 def _nexus_profile() -> InterestProfile:
@@ -99,6 +100,7 @@ class NexusMind(FamilyMember):
                     approved=True,
                     sources=list(answer.sources),
                     confidence=answer.confidence.score,
+                    turn_id=answer.turn_id,
                 ),
             )
         elif action == "HANDLE_VETO":
@@ -117,6 +119,7 @@ class NexusMind(FamilyMember):
                     directive=top.directive_name if top else None,
                     reason=reason,
                     report_uid=report.synapse_uid,
+                    turn_id=report.turn_id,
                 ),
             )
 

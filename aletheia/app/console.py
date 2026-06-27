@@ -12,11 +12,14 @@ from __future__ import annotations
 import asyncio
 
 from aletheia.app.qa_system import QASystem
+from aletheia.resonance.engine import ConsoleGavel
 
 
 async def _run() -> None:
     print("Booting Aletheia (Nexus-Mind → Archivist → Narrator → Philosopher) ...")
-    system = QASystem()
+    # A real Human Gavel: a policy change proposed by the Resonance Cycle prompts
+    # you at the terminal before anything is applied.
+    system = QASystem(gavel=ConsoleGavel())
     n = system.ingest_own_docs()
     print(f"  · Archivist ingested {n} passages from Aletheia's own documents.")
     if system.graph is not None:
@@ -30,9 +33,13 @@ async def _run() -> None:
         f"Prime Directives ({len(system.philosopher.directives.rules)} rules)."
     )
     print("  · Diagnostician monitoring the bus (loops / stalls / circuit breaker).")
-    print("\nAsk a question about Aletheia. Commands: /log  /health  /graph  /quit\n")
+    print(f"  · Resonance Cycle ready (operational_policy v{system.policy.version}).")
+    print(
+        "\nAsk a question about Aletheia. Commands: "
+        "/log  /health  /graph  /feedback  /policy  /quit\n"
+    )
 
-    last_seq = 0
+    last_turn: tuple[str, str] | None = None  # (turn_id, question) of the last answer
     while True:
         try:
             question = input("you › ").strip()
@@ -61,10 +68,37 @@ async def _run() -> None:
                 "are shown with sources when you ask.\n"
             )
             continue
+        if question == "/policy":
+            pol = system.policy.current
+            print(f"operational_policy v{pol.version}")
+            print(f"  distrusted sources: {pol.distrusted_sources or '(none)'}")
+            if system.policy.history:
+                print("  history:")
+                for e in system.policy.history:
+                    print(f"    {e['event']} v{e['from_version']}→v{e['to_version']}: {e['reason']}")
+            print()
+            continue
+        if question == "/feedback":
+            # Flag the last answer as incorrect and let the Resonance Cycle engage.
+            if last_turn is None:
+                print("  (ask a question first, then /feedback flags that answer as incorrect)\n")
+                continue
+            turn_id, asked = last_turn
+            print("Resonance Cycle — flagging the last answer as INCORRECT ...")
+            outcome = await system.submit_feedback(
+                turn_id=turn_id, question=asked, rating="INCORRECT",
+                note="Flagged incorrect by the operator at the console.",
+            )
+            print(f"  outcome: {outcome.status} — {outcome.message}")
+            if outcome.rca is not None:
+                print(f"  root cause: {outcome.rca.recommended_action}")
+            if outcome.verification is not None:
+                print(f"  verification: {outcome.verification.status} — {outcome.verification.sandbox_summary}")
+            print()
+            continue
 
-        before = len(system.cascade_log.entries)
         result = await system.ask(question)
-        last_seq = before  # noqa: F841 — reserved for future "since last turn" view
+        last_turn = (result.turn_id, question)
 
         print(f"\naletheia › {result.answer}\n")
         if result.approved:
