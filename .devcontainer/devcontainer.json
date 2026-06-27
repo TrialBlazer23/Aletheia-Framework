@@ -1,0 +1,26 @@
+{
+  "name": "Aletheia Framework",
+  "//": "One-click cloud dev environment for GitHub Codespaces. On create it installs Aletheia and all its dependencies (incl. the spaCy model + knowledge graph), so `python main.py` just works.",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  "// postCreateCommand": "Runs once when the Codespace is built. Installs the package with dev + graph extras; falls back to a direct spaCy model download if the pinned wheel is ever unreachable.",
+  "postCreateCommand": "python -m pip install --upgrade pip -q && pip install -e '.[dev,graph]' && (python -c 'import en_core_web_sm' 2>/dev/null || python -m spacy download en_core_web_sm) && echo '\\n✅ Aletheia is ready. Try:  python main.py'",
+
+  "remoteEnv": {
+    "PYTHONUNBUFFERED": "1"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "// ANTHROPIC_API_KEY": "Do NOT put your API key here. Set it as a Codespaces secret (see the README 'Run it in the cloud' section) so it's injected securely and never committed."
+}
