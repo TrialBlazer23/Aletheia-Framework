@@ -85,7 +85,7 @@ Each milestone is **independently demoable**. We do them in order; each one is a
 
 ---
 
-### Milestone 2 — The Conscience (Philosopher + Prime Directives)
+### Milestone 2 — The Conscience (Philosopher + Prime Directives) — ✅ DONE
 *Nothing reaches the user until the Philosopher approves it.*
 
 - The **four Prime Directives** encoded as a machine-readable `prime_directives.yaml` (Sanctity of Information Flow, Cosmic Preservation, Transcendence of Flawed Motivation, Dynamic Equilibrium).

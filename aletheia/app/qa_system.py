@@ -11,7 +11,8 @@ from pathlib import Path
 
 from aletheia.agents.archivist import Archivist
 from aletheia.agents.narrator import Narrator
-from aletheia.agents.nexus_mind import NexusMind
+from aletheia.agents.nexus_mind import NexusMind, QAResult
+from aletheia.agents.philosopher import Philosopher
 from aletheia.bus.in_process import InProcessBus
 from aletheia.config import load_local_env
 from aletheia.llm.base import LLMProvider
@@ -20,7 +21,6 @@ from aletheia.log.cascade_log import CascadeLog
 from aletheia.memory.asset_store import AssetStore
 from aletheia.memory.corpus import Document, load_markdown_corpus
 from aletheia.memory.vector_store import TfidfVectorStore, VectorStore
-from aletheia.sdr.primitives import AnswerAsset
 
 # The repository root — used to ingest Aletheia's own docs as the default corpus.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -49,7 +49,9 @@ class QASystem:
             bus=self.bus, vector_store=self.vectors, asset_store=self.assets
         )
         self.narrator = Narrator(bus=self.bus, llm=self.llm, asset_store=self.assets)
-        for agent in (self.nexus, self.archivist, self.narrator):
+        # The Philosopher sits between the Narrator and the user, with veto power.
+        self.philosopher = Philosopher(bus=self.bus, asset_store=self.assets)
+        for agent in (self.nexus, self.archivist, self.narrator, self.philosopher):
             agent.connect()
 
     # --- corpus ------------------------------------------------------------ #
@@ -62,5 +64,5 @@ class QASystem:
         return self.ingest(load_markdown_corpus(_REPO_ROOT))
 
     # --- the cascade ------------------------------------------------------- #
-    async def ask(self, question: str) -> AnswerAsset:
+    async def ask(self, question: str) -> QAResult:
         return await self.nexus.ask(question)

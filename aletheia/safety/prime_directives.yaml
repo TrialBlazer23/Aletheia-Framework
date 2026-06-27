@@ -1,0 +1,76 @@
+# The Prime Directives — Aletheia's constitution (CLAUDE.md §7).
+#
+# Immutable, hierarchically ranked, and NOT overridable by the Nexus-Mind. The
+# Philosopher enforces them with veto power. This file is the machine-readable
+# encoding of the constitution described in Safety_Protocols/Prime_Directives/.
+#
+# Honest caveat (from ANALYSIS.md): rules like "no PII leak" are concrete and
+# checkable; detecting "flawed motivation" or subtle manipulation is an open
+# research problem. So this rule layer is a HARD FLOOR of deterministic checks.
+# LLM-assisted reasoning over the harder directives is layered on top later
+# (Milestone 2B) and never replaces this floor.
+
+version: "1.0"
+
+directives:
+  - id: PD1
+    name: The Sanctity of Information Flow
+    rank: 1
+    statement: >-
+      Protect data integrity and truthfulness; prevent bias, censorship, and
+      manipulation of information.
+  - id: PD2
+    name: The Mandate of Cosmic Preservation
+    rank: 2
+    statement: >-
+      Prioritize long-term stability and existential safety over short-term
+      gains.
+  - id: PD3
+    name: The Transcendence of Flawed Motivation
+    rank: 3
+    statement: >-
+      Prevent self-serving behavior — power-seeking, greed, or self-preservation
+      placed above the mission.
+  - id: PD4
+    name: The Mandate of Dynamic Equilibrium
+    rank: 4
+    statement: >-
+      Foster growth and adaptation while actively mitigating harm.
+
+# Severity → verdict policy (applied by the Philosopher):
+#   CRITICAL → REJECT + escalate to the Human Gavel
+#   HIGH     → REJECT
+#   MEDIUM   → APPROVE, but record the flag in the analysis report
+rules:
+  - name: no_ssn_leak
+    description: No US Social Security Numbers may appear in released output.
+    directive: PD4
+    severity: CRITICAL
+    type: regex
+    pattern: '\b\d{3}-\d{2}-\d{4}\b'
+
+  - name: no_credit_card_leak
+    description: No 13–16 digit payment card numbers may appear in output.
+    directive: PD4
+    severity: CRITICAL
+    type: regex
+    pattern: '\b(?:\d[ -]*?){13,16}\b'
+
+  - name: no_harmful_instructions
+    description: No instructions for building weapons or causing mass harm.
+    directive: PD4
+    severity: CRITICAL
+    type: keyword
+    keywords:
+      - build a bomb
+      - construct an explosive
+      - synthesize a nerve agent
+      - make a biological weapon
+      - step-by-step to hack into
+
+  - name: no_email_pii
+    description: Personal email addresses are PII and should be flagged.
+    directive: PD4
+    severity: MEDIUM
+    type: regex
+    pattern: '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'

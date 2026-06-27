@@ -14,11 +14,15 @@ from aletheia.app.qa_system import QASystem
 
 
 async def _run() -> None:
-    print("Booting Aletheia (Milestone 1: Nexus-Mind → Archivist → Narrator) ...")
+    print("Booting Aletheia (Nexus-Mind → Archivist → Narrator → Philosopher) ...")
     system = QASystem()
     n = system.ingest_own_docs()
     print(f"  · Archivist ingested {n} passages from Aletheia's own documents.")
     print(f"  · Narrator brain: {system.llm.name}")
+    print(
+        f"  · Philosopher enforcing {len(system.philosopher.directives.directives)} "
+        f"Prime Directives ({len(system.philosopher.directives.rules)} rules)."
+    )
     print("\nAsk a question about Aletheia. Commands: /log  /quit\n")
 
     last_seq = 0
@@ -37,14 +41,21 @@ async def _run() -> None:
             continue
 
         before = len(system.cascade_log.entries)
-        answer = await system.ask(question)
+        result = await system.ask(question)
         last_seq = before  # noqa: F841 — reserved for future "since last turn" view
 
-        print(f"\naletheia › {answer.answer.text}\n")
-        if answer.sources:
-            unique = list(dict.fromkeys(answer.sources))
-            print("  sources: " + "; ".join(unique))
-        print(f"  confidence: {answer.confidence.score:.2f}   (type /log to see the cascade)\n")
+        print(f"\naletheia › {result.answer}\n")
+        if result.approved:
+            if result.sources:
+                unique = list(dict.fromkeys(result.sources))
+                print("  sources: " + "; ".join(unique))
+            print(
+                f"  ✓ approved by the Philosopher   confidence: {result.confidence:.2f}"
+                "   (type /log to see the cascade)\n"
+            )
+        else:
+            print(f"  ⛔ vetoed — Directive: {result.directive}")
+            print(f"  reason: {result.reason}   (type /log to see the cascade)\n")
 
     print("Goodbye.")
 
