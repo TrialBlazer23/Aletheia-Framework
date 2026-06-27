@@ -5,11 +5,11 @@
 **A Neuro-Symbolic Standard for Auditable, Self-Healing Agent Ecosystems.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status: Experimental](https://img.shields.io/badge/Status-Experimental-red.svg)]()
+[![Status: Active Development](https://img.shields.io/badge/Status-Active%20Development-green.svg)]()
 [![Architecture: Neuro-Symbolic](https://img.shields.io/badge/Architecture-Neuro--Symbolic-blueviolet.svg)]()
-[![Implementation: Pre-Alpha](https://img.shields.io/badge/Implementation-Pre--Alpha-orange.svg)]()
+[![Implementation: Alpha](https://img.shields.io/badge/Implementation-Alpha%20(M0–M2)-orange.svg)]()
 
-> **Current Status (January 2026):** This repository contains comprehensive architectural documentation and design specifications. Active implementation has not yet begun. See [QUICK_ASSESSMENT.md](QUICK_ASSESSMENT.md) for feasibility analysis and [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md) for development plans.
+> **Current Status (June 2026):** Implementation is underway. **Milestones 0–2 are built and runnable** — the Synapse nervous system, the first living 3-agent cascade (Nexus-Mind → Archivist → Narrator), and the Philosopher safety kernel enforcing the Prime Directives. The whole system runs locally with one command (`python main.py`) and is covered by a passing test suite. See [`ROADMAP.md`](ROADMAP.md) for the build plan and [`CLAUDE.md`](CLAUDE.md) for the canonical design.
 
 > **The Philosophy:** Current AI models are Black Boxes. Aletheia is a **Glass Box**. It separates *Generation* (The Narrator) from *Judgment* (The Philosopher) to create agents that are safe, auditable, and capable of recursive self-improvement.
 > *Read the origin story and architectural thesis in [VISION.md](VISION.md).*
@@ -18,99 +18,78 @@
 
 ## 🏗️ The Architecture
 
-Aletheia is not a single model. It is a **Multi-Agent System (MAS)** composed of specialized "Organs" that communicate via the **Domino Cascade** (Event Bus).
+Aletheia is not a single model. It is a **Multi-Agent System (MAS)** composed of specialized "Organs" that communicate via the **Domino Cascade** (event bus).
 
 ### 1. The Family (Agent Roles)
 
-| Agent | Role | Function |
-| --- | --- | --- |
-| **Nexus-Mind** | Orchestrator | Strategic planning, task decomposition, and resource allocation. The "System 2" thinker. |
-| **Philosopher** | Ethical Kernel | A Neuro-Symbolic auditor that validates outputs against "Prime Directives" *before* execution. |
-| **Archivist** | Memory Core | Manages the Knowledge Graph using deterministic dependency parsing (Spacy) to prevent hallucinations. |
-| **Diagnostician** | Self-Healing | Monitors the event bus for infinite loops or failures. Triggers the **Resonance Cycle** to patch policy errors. |
-| **Narrator** | Interface | Synthesizes complex data into human-readable narrative. |
+| Agent | Role | Function | Status |
+| --- | --- | --- | --- |
+| **Nexus-Mind** | Orchestrator | Strategic planning, task decomposition, and resource allocation. The "System 2" thinker. | ✅ Built (M1) |
+| **Archivist** | Memory Core | Manages grounded memory; retrieves context with source attribution. Knowledge graph via deterministic parsing arrives in M4. | ✅ Built (M1) |
+| **Narrator** | Interface | Synthesizes complex data into a human-readable answer. Generation only. | ✅ Built (M1) |
+| **Philosopher** | Ethical Kernel | A neuro-symbolic auditor that validates outputs against the "Prime Directives" *before* release, with veto power. | ✅ Built (M2) |
+| **Diagnostician** | Self-Healing | Monitors the event bus for loops/failures, trips circuit breakers, emits health telemetry. | ⏳ Planned (M3) |
+| **Visionary** | Simulation | Predictive modeling and creative asset generation. | ⏳ Planned (M6) |
 
 ### 2. Core Mechanics
 
 #### The Domino Cascade (Event-Driven Flow)
 
-Unlike linear chains, Aletheia agents operate asynchronously.
+Agents don't wait for orders — they listen for events and react, producing a chain reaction. Every hop is recorded in the append-only **Cascade Log** (the Glass Box audit trail).
 
-> *Example:* `USER_INPUT` -> **Archivist** (retrieves context) -> `CONTEXT_READY` -> **Narrator** (drafts response) -> `DRAFT_READY` -> **Philosopher** (audits draft) -> `APPROVED` -> **User**.
+> *Live example (built):* `USER_INPUT` → **Nexus-Mind** `TRIGGER` → **Archivist** `DATA_VALIDATED` → **Narrator** `DRAFT_READY` → **Philosopher** `APPROVED` → **User**.
 
-#### The Resonance Cycle (Recursive Improvement)
+#### The Resonance Cycle (Recursive Improvement) — *planned (M5)*
 
-The system does not just log errors; it learns from them.
-
-1. **Experience:** The system logs a failure (e.g., a loop or a rejected draft).
-2. **Reflection:** The Nexus-Mind analyzes the *Cascade Log*.
-3. **Mutation:** The system proposes an update to its `Operational_Policy.json`.
-4. **Verification:** The Philosopher validates the new policy.
-5. **Integration:** The agent's behavior is permanently updated.
+The system learns from its own logged failures: it traces the Cascade Log to a root cause, proposes a policy update, has the Philosopher verify it in a sandbox, and applies it only after human approval (the "Human Gavel").
 
 ---
 
-## 📊 Project Analysis & Roadmap
+## 🚀 Getting Started
 
-**Status: Pre-Implementation Phase** - This repository contains comprehensive architectural documentation. Implementation has not yet begun.
-
-### Available Documentation
-
-* **[QUICK_ASSESSMENT.md](QUICK_ASSESSMENT.md)** - Executive summary and feasibility analysis (5 min read)
-* **[ANALYSIS.md](ANALYSIS.md)** - Comprehensive technical review of the architecture, strengths, challenges, and recommendations (20 min read)
-* **[IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md)** - Phased implementation plan with timelines, resource requirements, and code examples (30 min read)
-
-### Key Findings
-
-✅ **Core architecture is viable** - Multi-agent orchestration and event-driven workflows are proven patterns  
-✅ **Safety-first design is innovative** - Dedicated validation agent (The Philosopher) is architecturally sound  
-⚠️ **Requires staged implementation** - Build MVP (3-agent system) before attempting full Resonance Cycle  
-⚠️ **Research components need caution** - Self-modifying AI should start with human-supervised parameter tuning  
-
-**Recommendation:** Proceed with phased implementation starting with a 3-agent prototype (Nexus-Mind, Archivist, Narrator). Estimated timeline to production-ready system: 18-24 months.
-
----
-
-## 🚀 Getting Started (Future Implementation)
-
-**Note:** The implementation described below does not yet exist. See [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md) for development plans.
+The whole system runs locally — no cloud services required.
 
 ### Prerequisites
+* Python 3.11+
 
-* Python 3.10+
-* Spacy (`en_core_web_lg`)
-* Message Bus (RabbitMQ or Redis)
-* Vector Database (Pinecone, Weaviate, or similar)
-* LLM API (OpenAI, Anthropic, or local via Ollama)
-
-### Installation (Planned)
-
+### Installation
 ```bash
 git clone https://github.com/TrialBlazer23/Aletheia-Framework.git
 cd Aletheia-Framework
-pip install -r requirements.txt
-python -m spacy download en_core_web_lg
+python -m venv .venv && . .venv/bin/activate
+pip install -e ".[dev]"
 ```
 
-### Running the Prototype (Planned)
-
-To launch the `Nexus-Mind` console:
+### Running it
 ```bash
-python main.py
+python main.py              # Q&A console — ask Aletheia about its own design
+python main.py --handshake  # the Milestone 0 two-agent handshake demo
+python -m pytest            # the test suite
 ```
+
+**Live Claude vs. offline mode:** by default the Narrator uses Anthropic Claude. Provide a key and you get Claude-composed answers; without one, the system runs in a free **offline mode** that returns grounded extracts from the documents (it never fails — it degrades gracefully). To enable live Claude, copy `.env.example` to `.env` and paste your key (the `.env` file is git-ignored):
+```bash
+cp .env.example .env        # then edit .env and add ANTHROPIC_API_KEY=sk-ant-...
+```
+
+---
+
+## 📊 Documentation
+
+* **[`CLAUDE.md`](CLAUDE.md)** — the canonical design + build conventions (single source of truth for *what the system must be*).
+* **[`ROADMAP.md`](ROADMAP.md)** — the real, milestone-by-milestone build plan we follow.
+* **[VISION.md](VISION.md)** — the manifesto and architectural thesis.
+* **[QUICK_ASSESSMENT.md](QUICK_ASSESSMENT.md)** / **[ANALYSIS.md](ANALYSIS.md)** — feasibility analysis and technical review.
+* **[IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md)** — the aspirational enterprise-scale timeline (for reference; `ROADMAP.md` is what we actually follow).
 
 ---
 
 ## 📂 Repository Structure
 
-* `/Architecture`: Detailed specifications for Core Models, Coordination, and Memory/Learning systems
-* `/Standards`: Protocol specifications including Synapse Protocol, Interface Layer, and Data Representation
-* `/RFCs`: Proposed and draft specifications for system enhancements
-* `/Safety_Protocols`: Prime Directives and safety framework definitions
-* **Analysis Documents:**
-  * `ANALYSIS.md` - Comprehensive feasibility and technical assessment
-  * `QUICK_ASSESSMENT.md` - Executive summary and recommendations  
-  * `IMPLEMENTATION_ROADMAP.md` - Phased development plan with timelines
+* `/aletheia`: the implementation — `protocol/` (Synapse), `bus/` (Domino Cascade), `sil/` (Interface Layer), `agents/` (the Family), `safety/` (Prime Directives + validator), `memory/`, `sdr/`, `llm/`, `app/`, `log/`.
+* `/tests`: the test suite.
+* `/Architecture`, `/Standards`, `/Safety_Protocols`, `/RFCs`: the design specifications (the source of truth the implementation is built from).
+* Analysis & planning: `CLAUDE.md`, `ROADMAP.md`, `ANALYSIS.md`, `QUICK_ASSESSMENT.md`.
 
 ---
 
@@ -118,8 +97,8 @@ python main.py
 
 We are looking for architects, ethicists, and engineers to help build the **Glass Box** future.
 
-* **Engineers:** Help us refine the *Domino Cascade* event bus.
-* **Philosophers:** Help us expand the ethical rule sets for the *Philosopher* agent.
+* **Engineers:** Help refine the *Domino Cascade* event bus and the Family of agents.
+* **Philosophers:** Help expand the ethical rule sets for the *Philosopher* agent.
 
 ## 📜 License
 
