@@ -17,6 +17,9 @@ command.
                                     the satire-as-fact failure; watch the system
                                     detect → analyse → propose → sandbox-verify →
                                     Human-Gavel-approve → heal → roll back.
+* ``python main.py --creative``    → the Milestone 6 creative cascade: the whole
+                                    Family (incl. the Visionary) turns a creature
+                                    request into a safety-checked design package.
 """
 
 import sys
@@ -39,6 +42,10 @@ def main() -> None:
         from aletheia.demo.resonance_demo import main as run_resonance
 
         run_resonance()
+    elif "--creative" in sys.argv:
+        from aletheia.demo.creative_demo import main as run_creative
+
+        run_creative()
     else:
         from aletheia.app.console import main as run_console
 

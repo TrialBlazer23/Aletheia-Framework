@@ -74,6 +74,9 @@ class RetrievedContextAsset(_SdrModel):
     question: str = Field(alias="Question")
     passages: list[SdrSourcePassage] = Field(default_factory=list, alias="Passages")
     facts: list["SdrFactAssertion"] = Field(default_factory=list, alias="Facts")
+    # "qa" (answer a question) or "creative" (ground a creative concept). The
+    # cascade branches on this at the Narrator — same retrieval, different output.
+    mode: str = Field(default="qa", alias="Mode")
     metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
 
 
@@ -300,6 +303,133 @@ class SdrVerificationResult(_SdrModel):
     sandbox_summary: str = Field(alias="Sandbox_Summary")
     confidence: SdrConfidenceScore = Field(alias="Confidence")
     metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+# --------------------------------------------------------------------------- #
+# Tier-3 — the Visionary's creative assets (Milestone 6)
+# Structured visual/auditory design briefs — the creative SDR types brought
+# online. Field names follow the Synapse_Data_Representation specs (RGB color,
+# visual concept brief, color palette, soundscape, music composition).
+# --------------------------------------------------------------------------- #
+class SdrRgbColorValue(_SdrModel):
+    """A color in the RGB additive model (`SDR_RGB_Color_Value`)."""
+
+    red: int = Field(ge=0, le=255, alias="Red_Value")
+    green: int = Field(ge=0, le=255, alias="Green_Value")
+    blue: int = Field(ge=0, le=255, alias="Blue_Value")
+    alpha: float = Field(default=1.0, ge=0.0, le=1.0, alias="Alpha_Channel_Value")
+
+    @property
+    def hex(self) -> str:
+        return f"#{self.red:02X}{self.green:02X}{self.blue:02X}"
+
+
+class SdrColorDefinition(_SdrModel):
+    """A named color with its RGB value and role (`SDR_Color_Definition`)."""
+
+    name: str = Field(alias="Color_Name")
+    rgb: SdrRgbColorValue = Field(alias="RGB_Value")
+    role: str = Field(default="primary", alias="Role")  # primary | accent | neutral
+
+
+class SdrColorPaletteDefinition(_SdrModel):
+    """A color palette (`SDR_Color_Palette_Definition`)."""
+
+    synapse_uid: str = Field(default_factory=lambda: new_uid("ASSET", "COLOR_PALETTE"), alias="Synapse_UID")
+    name: str = Field(alias="Palette_Name")
+    description: str = Field(default="", alias="Palette_Description")
+    colors: list[SdrColorDefinition] = Field(default_factory=list, alias="Colors")
+    harmony_rule: str = Field(default="", alias="Color_Harmony_Rule")
+
+
+class SdrVisualConceptBrief(_SdrModel):
+    """A brief for visual/concept art (`SDR_Visual_Concept_Brief`)."""
+
+    synapse_uid: str = Field(default_factory=lambda: new_uid("ASSET", "VISUAL_BRIEF"), alias="Synapse_UID")
+    title: str = Field(alias="Brief_Title")
+    subject_description: SdrTextBlock = Field(alias="Subject_Description")
+    visual_styles: list[str] = Field(default_factory=list, alias="Visual_Style_References")
+    color_palette: SdrColorPaletteDefinition | None = Field(default=None, alias="Color_Palette")
+    mood_and_atmosphere: str = Field(alias="Mood_And_Atmosphere_Target")
+    key_elements: list[str] = Field(default_factory=list, alias="Key_Elements_To_Include")
+    things_to_avoid: list[str] = Field(default_factory=list, alias="Things_To_Avoid")
+    intended_usage: str = Field(default="", alias="Intended_Usage_Context")
+
+
+class SdrSoundscapeBrief(_SdrModel):
+    """A brief for an immersive soundscape (`SDR_Soundscape_Brief`)."""
+
+    synapse_uid: str = Field(default_factory=lambda: new_uid("ASSET", "SOUNDSCAPE_BRIEF"), alias="Synapse_UID")
+    overall_atmosphere_goal: str = Field(alias="Overall_Atmosphere_Goal")
+    ambient_noise_profile: str = Field(default="", alias="Ambient_Noise_Profile")
+    key_sound_effects: list[str] = Field(default_factory=list, alias="Key_Sound_Effects")
+    musical_integration_notes: str = Field(default="", alias="Musical_Integration_Notes")
+    technical_delivery_specs: str = Field(default="", alias="Technical_Delivery_Specs")
+
+
+class SdrMusicCompositionBrief(_SdrModel):
+    """A brief for thematic music (`SDR_Music_Composition_Brief`)."""
+
+    synapse_uid: str = Field(default_factory=lambda: new_uid("ASSET", "MUSIC_BRIEF"), alias="Synapse_UID")
+    title_or_purpose: str = Field(alias="Composition_Title_Or_Purpose")
+    genre_style_suggestions: list[str] = Field(default_factory=list, alias="Genre_Style_Suggestions")
+    tempo_description: str = Field(default="", alias="Tempo_Description")
+    key_modality: str = Field(default="", alias="Key_Modality_Suggestions")
+    instrumentation_palette: list[str] = Field(default_factory=list, alias="Instrumentation_Palette")
+    emotional_arc_target: str = Field(alias="Emotional_Arc_Target")
+    estimated_duration: str = Field(default="", alias="Estimated_Duration")
+
+
+class ConceptAsset(_SdrModel):
+    """The Narrator's *creative* output: a grounded narrative concept.
+
+    The creative-cascade analogue of ``AnswerAsset`` — generation only, judgment
+    is the Philosopher's job — that the Visionary turns into design assets.
+    """
+
+    synapse_uid: str = Field(default_factory=lambda: new_uid("ASSET", "CONCEPT"), alias="Synapse_UID")
+    turn_id: str = Field(alias="Turn_ID")
+    request: str = Field(alias="Request")
+    concept: SdrTextBlock = Field(alias="Concept")
+    sources: list[str] = Field(default_factory=list, alias="Sources")
+    confidence: SdrConfidenceScore = Field(alias="Confidence")
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+class CreativeAsset(_SdrModel):
+    """The Visionary's deliverable: a bundle of design briefs for a concept.
+
+    One addressable asset gathering the visual concept, color palette, soundscape,
+    and music briefs the Visionary generated — the creative cascade's output,
+    still safety-checked by the Philosopher before it reaches the user.
+    """
+
+    synapse_uid: str = Field(default_factory=lambda: new_uid("ASSET", "CREATIVE_PACKAGE"), alias="Synapse_UID")
+    turn_id: str = Field(alias="Turn_ID")
+    request: str = Field(alias="Request")
+    title: str = Field(alias="Title")
+    concept: SdrTextBlock = Field(alias="Concept")
+    visual_brief: SdrVisualConceptBrief = Field(alias="Visual_Concept_Brief")
+    soundscape_brief: SdrSoundscapeBrief = Field(alias="Soundscape_Brief")
+    music_brief: SdrMusicCompositionBrief = Field(alias="Music_Composition_Brief")
+    sources: list[str] = Field(default_factory=list, alias="Sources")
+    confidence: SdrConfidenceScore = Field(alias="Confidence")
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+    def review_text(self) -> str:
+        """Flat text the Philosopher validates before release."""
+        vb = self.visual_brief
+        parts = [
+            self.title,
+            self.concept.text,
+            vb.subject_description.text,
+            vb.mood_and_atmosphere,
+            " ".join(vb.key_elements),
+            self.soundscape_brief.overall_atmosphere_goal,
+            " ".join(self.soundscape_brief.key_sound_effects),
+            self.music_brief.emotional_arc_target,
+        ]
+        return "\n".join(p for p in parts if p)
 
 
 # RetrievedContextAsset references SdrFactAssertion, which is defined above it in

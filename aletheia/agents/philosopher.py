@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from aletheia.agents.family import NARRATOR_UID, PHILOSOPHER_UID
+from aletheia.agents.family import NARRATOR_UID, PHILOSOPHER_UID, VISIONARY_UID
 from aletheia.agents.family_member import FamilyMember
 from aletheia.bus.base import MessageBus
 from aletheia.memory.asset_store import AssetStore
@@ -29,6 +29,7 @@ from aletheia.safety.prime_directives import PrimeDirectives
 from aletheia.safety.validator import RuleBasedValidator, Violation
 from aletheia.sdr.primitives import (
     AnswerAsset,
+    CreativeAsset,
     SdrConfidenceScore,
     SdrDirectiveViolation,
     SdrEthicalAnalysisReport,
@@ -52,12 +53,20 @@ _VETO_SEVERITIES = {"CRITICAL", "HIGH"}
 def _philosopher_profile() -> InterestProfile:
     return InterestProfile(
         [
+            # Q&A output from the Narrator ...
             InterestRule(
                 action_to_trigger="VALIDATE_OUTPUT",
                 source_model_uid=NARRATOR_UID,
                 message_type=MessageType.EVENT,
                 event_name="DRAFT_READY",
-            )
+            ),
+            # ... and creative output from the Visionary. Every output is judged.
+            InterestRule(
+                action_to_trigger="VALIDATE_OUTPUT",
+                source_model_uid=VISIONARY_UID,
+                message_type=MessageType.EVENT,
+                event_name="ASSET_GENERATED",
+            ),
         ]
     )
 
@@ -85,16 +94,19 @@ class Philosopher(FamilyMember):
     ) -> None:
         if action != "VALIDATE_OUTPUT":
             return
-        answer: AnswerAsset = self._assets.get(data["data_asset_uid"])
+        # The subject may be a Q&A answer (Narrator) or a creative package
+        # (Visionary). Both are validated the same way against the Directives.
+        subject = self._assets.get(data["data_asset_uid"])
+        text = self._text_to_review(subject)
 
-        all_findings = self._validator.validate(answer.answer.text)
+        all_findings = self._validator.validate(text)
         vetoes = [v for v in all_findings if v.severity in _VETO_SEVERITIES]
         flags = [v for v in all_findings if v.severity not in _VETO_SEVERITIES]
         approved = not vetoes
 
         report = SdrEthicalAnalysisReport(
-            turn_id=answer.turn_id,
-            subject_asset_uid=answer.synapse_uid,
+            turn_id=subject.turn_id,
+            subject_asset_uid=subject.synapse_uid,
             verdict="APPROVED" if approved else "REJECTED",
             violations=[self._to_sdr(v) for v in vetoes],
             flags=[self._to_sdr(v) for v in flags],
@@ -105,14 +117,14 @@ class Philosopher(FamilyMember):
         )
         self._assets.put(report.synapse_uid, report)
 
-        # (Step 4) broadcast the verdict. APPROVED points at the answer (so the
-        # Nexus-Mind can release it); REJECTED points at the report (the reason).
+        # (Step 4) broadcast the verdict. APPROVED points at the subject asset
+        # (so the Nexus-Mind can release it); REJECTED points at the report.
         if approved:
             await self.broadcaster.broadcast_event(
                 event_name="APPROVED",
-                data_asset_uid=answer.synapse_uid,
+                data_asset_uid=subject.synapse_uid,
                 description="Output cleared against the Prime Directives.",
-                confidence_score=answer.confidence.score,
+                confidence_score=subject.confidence.score,
             )
         else:
             await self.broadcaster.broadcast_event(
@@ -121,6 +133,17 @@ class Philosopher(FamilyMember):
                 description=f"VETO — violates {vetoes[0].directive_name}.",
                 confidence_score=1.0,
             )
+
+    @staticmethod
+    def _text_to_review(subject: Any) -> str:
+        """The text the rule layer scans — for a Q&A answer or a creative package."""
+        if isinstance(subject, CreativeAsset):
+            return subject.review_text()
+        if isinstance(subject, AnswerAsset):
+            return subject.answer.text
+        # Be permissive: validate whatever text-bearing field we can find.
+        text = getattr(subject, "answer", None)
+        return text.text if hasattr(text, "text") else str(getattr(subject, "concept", ""))
 
     # --- Runtime Safety Kernel: verify a Resonance policy proposal --------- #
     def verify_policy_proposal(
