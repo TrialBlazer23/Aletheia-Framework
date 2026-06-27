@@ -4,6 +4,7 @@ import asyncio
 
 from aletheia.agents.family import ARCHIVIST_UID, NARRATOR_UID, NEXUS_MIND_UID
 from aletheia.app.qa_system import QASystem
+from aletheia.config import load_local_env
 from aletheia.llm.base import LLMProvider
 from aletheia.llm.factory import get_default_provider
 from aletheia.llm.offline_provider import OfflineProvider
@@ -54,6 +55,30 @@ def test_sdr_metadata_aliases_are_canonical():
 def test_factory_returns_offline_without_api_key(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     assert isinstance(get_default_provider(), OfflineProvider)
+
+
+# --- .env loader ----------------------------------------------------------- #
+def test_load_local_env_missing_file_is_noop(tmp_path):
+    assert load_local_env(tmp_path / "nope.env") is False
+
+
+def test_load_local_env_parses_and_never_overrides(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "# a comment\n"
+        "export ANTHROPIC_API_KEY='sk-ant-from-file'\n"
+        "ALETHEIA_LLM_MODEL=\"claude-sonnet-4-6\"\n"
+        "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("ALETHEIA_LLM_MODEL", "already-set")  # must NOT be overridden
+
+    assert load_local_env(env_file) is True
+    import os
+
+    assert os.environ["ANTHROPIC_API_KEY"] == "sk-ant-from-file"  # quotes + export stripped
+    assert os.environ["ALETHEIA_LLM_MODEL"] == "already-set"  # preserved
 
 
 # --- the cascade ----------------------------------------------------------- #

@@ -22,14 +22,23 @@ def load_local_env(path: str | Path | None = None) -> bool:
     """Load ``KEY=value`` lines from a ``.env`` file into ``os.environ``.
 
     Returns True if a file was found and read. Existing env vars are preserved.
-    Supports ``#`` comments, blank lines, optional surrounding quotes, and an
-    optional leading ``export``.
+    Supports full-line ``#`` comments (a line whose first non-space character is
+    ``#``; inline trailing comments are NOT stripped), blank lines, optional
+    surrounding quotes, and an optional leading ``export``.
+
+    Fails closed: if the file is missing or can't be read (permissions, IO), this
+    is a no-op that returns False rather than raising — config loading must never
+    crash startup.
     """
     env_path = Path(path) if path is not None else _REPO_ROOT / ".env"
-    if not env_path.is_file():
+    try:
+        if not env_path.is_file():
+            return False
+        contents = env_path.read_text(encoding="utf-8")
+    except OSError:
         return False
 
-    for raw in env_path.read_text(encoding="utf-8").splitlines():
+    for raw in contents.splitlines():
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
