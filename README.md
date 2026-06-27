@@ -7,9 +7,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status: Active Development](https://img.shields.io/badge/Status-Active%20Development-green.svg)]()
 [![Architecture: Neuro-Symbolic](https://img.shields.io/badge/Architecture-Neuro--Symbolic-blueviolet.svg)]()
-[![Implementation: Alpha](https://img.shields.io/badge/Implementation-Alpha%20(M0–M2)-orange.svg)]()
+[![Implementation: M0–M6](https://img.shields.io/badge/Implementation-M0–M6%20(Family%20complete)-success.svg)]()
 
-> **Current Status (June 2026):** Implementation is underway. **Milestones 0–2 are built and runnable** — the Synapse nervous system, the first living 3-agent cascade (Nexus-Mind → Archivist → Narrator), and the Philosopher safety kernel enforcing the Prime Directives. The whole system runs locally with one command (`python main.py`) and is covered by a passing test suite. See [`ROADMAP.md`](ROADMAP.md) for the build plan and [`CLAUDE.md`](CLAUDE.md) for the canonical design.
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TrialBlazer23/Aletheia-Framework)
+
+> **Current Status (June 2026):** **Milestones 0–6 are built, tested, and runnable — the six-agent Family is complete.** The Synapse nervous system, the Domino Cascade, the full Family (Nexus-Mind, Archivist, Narrator, Philosopher, Diagnostician, Visionary), the knowledge-graph memory, the supervised **Resonance Cycle** with the **Human Gavel**, and the creative cascade. The whole system runs with one command (`python main.py`) and is covered by a passing test suite. See [`ROADMAP.md`](ROADMAP.md) for the build plan and [`CLAUDE.md`](CLAUDE.md) for the canonical design.
 
 > **The Philosophy:** Current AI models are Black Boxes. Aletheia is a **Glass Box**. It separates *Generation* (The Narrator) from *Judgment* (The Philosopher) to create agents that are safe, auditable, and capable of recursive self-improvement.
 > *Read the origin story and architectural thesis in [VISION.md](VISION.md).*
@@ -47,29 +49,48 @@ The system learns from its own logged failures: it traces the Cascade Log to a r
 
 ## 🚀 Getting Started
 
-The whole system runs locally — no cloud services required.
+### Run it in the cloud — GitHub Codespaces (easiest, nothing to install)
 
-### Prerequisites
-* Python 3.11+
+A **Codespace** is a full computer that runs in your browser — no local setup, no terminal on your own machine. This repo ships a dev-container, so the Codespace installs everything for you automatically.
 
-### Installation
+1. **Open a Codespace.** On the repo's GitHub page, click the green **`< > Code`** button → the **Codespaces** tab → **Create codespace on main**. (Or just click the **Open in GitHub Codespaces** badge at the top of this README.)
+2. **Wait ~2–3 minutes** the first time while it builds. When the terminal shows **`✅ Aletheia is ready`**, it's done.
+3. **Run it** by typing this in the terminal at the bottom and pressing Enter:
+   ```bash
+   python main.py
+   ```
+   Then type a question like *"What does the Philosopher enforce?"* and press Enter. Try `/create a bioluminescent deep-sea creature` for the creative cascade, or `/quit` to exit.
+
+**Turn on live Claude (optional).** Without a key, Aletheia runs in a free **offline mode** (it still works — it returns grounded extracts instead of Claude-composed prose). To get full Claude answers, add your Anthropic API key as a **Codespaces secret** so it's stored securely and never committed:
+* Go to **https://github.com/settings/codespaces** → **Secrets** → **New secret**.
+* **Name:** `ANTHROPIC_API_KEY`  **Value:** your key (`sk-ant-...`)  **Repository access:** select **Aletheia-Framework**.
+* Back in the Codespace, click the menu (≡) → **Reload Window** (or stop & restart the Codespace) so it picks up the secret. Run `python main.py` again — it should say *"Narrator brain: Anthropic Claude"*.
+
+> 💡 Codespaces gives every personal GitHub account a generous free monthly allowance. **Stop your Codespace when you're done** (github.com/codespaces → **⋯** → Stop) so it doesn't keep using hours.
+
+### See it work — the milestone demos
+Each runs end-to-end and prints what's happening:
+```bash
+python main.py --creative     # the full Family makes a safety-checked creative asset
+python main.py --resonance    # the system heals itself from a bad fact (Human Gavel)
+python main.py --knowledge    # answers a relational question by graph traversal
+python main.py --diagnostics  # induces a loop + a hung agent; the Diagnostician contains them
+python main.py --handshake    # the very first two-agent handshake over the bus
+python -m pytest              # the full test suite
+```
+
+### Run it on your own machine instead (optional)
+Prerequisite: **Python 3.11+**.
 ```bash
 git clone https://github.com/TrialBlazer23/Aletheia-Framework.git
 cd Aletheia-Framework
 python -m venv .venv && . .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev,graph]"     # the [graph] extra adds spaCy + the knowledge graph
+python main.py
 ```
-
-### Running it
+To enable live Claude locally, copy `.env.example` to `.env` and paste your key (the `.env` file is git-ignored):
 ```bash
-python main.py              # Q&A console — ask Aletheia about its own design
-python main.py --handshake  # the Milestone 0 two-agent handshake demo
-python -m pytest            # the test suite
-```
-
-**Live Claude vs. offline mode:** by default the Narrator uses Anthropic Claude. Provide a key and you get Claude-composed answers; without one, the system runs in a free **offline mode** that returns grounded extracts from the documents (it never fails — it degrades gracefully). To enable live Claude, copy `.env.example` to `.env` and paste your key (the `.env` file is git-ignored):
-```bash
-cp .env.example .env        # then edit .env and add ANTHROPIC_API_KEY=sk-ant-...
+cp .env.example .env              # then edit .env and add ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ---
