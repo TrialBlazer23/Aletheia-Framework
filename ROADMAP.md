@@ -52,7 +52,7 @@ Six "Family" agents with their canonical UIDs, talking over the **Domino Cascade
 
 Each milestone is **independently demoable**. We do them in order; each one is a handful of focused build sessions, not weeks of calendar time. We don't move on until the "✅ Done when" demo actually runs.
 
-### Milestone 0 — The Nervous System (Synapse core + Glass Box)
+### Milestone 0 — The Nervous System (Synapse core + Glass Box) — ✅ DONE
 *Build the spine before the organs.*
 
 - Repo/package scaffold (`aletheia/`), dependency setup, one-command run + test.
@@ -68,7 +68,7 @@ Each milestone is **independently demoable**. We do them in order; each one is a
 
 ---
 
-### Milestone 1 — The First Living Cascade (3-agent MVP)
+### Milestone 1 — The First Living Cascade (3-agent MVP) — ✅ DONE
 *Nexus-Mind → Archivist → Narrator, end to end.*
 
 - `LLMProvider` interface; **Claude** default provider (config via env). Cost-safe defaults (cheap model for routine steps, strong model for reasoning).
