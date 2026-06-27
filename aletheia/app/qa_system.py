@@ -14,8 +14,9 @@ from pathlib import Path
 from aletheia.agents.archivist import Archivist
 from aletheia.agents.diagnostician import Diagnostician
 from aletheia.agents.narrator import Narrator
-from aletheia.agents.nexus_mind import NexusMind, QAResult
+from aletheia.agents.nexus_mind import CreativeResult, NexusMind, QAResult
 from aletheia.agents.philosopher import Philosopher
+from aletheia.agents.visionary import Visionary
 from aletheia.bus.in_process import InProcessBus
 from aletheia.config import load_local_env
 from aletheia.diagnostics.circuit_breaker import CircuitBreaker
@@ -96,7 +97,11 @@ class QASystem:
             policy_store=self.policy,
         )
         self.narrator = Narrator(bus=self.bus, llm=self.llm, asset_store=self.assets)
-        # The Philosopher sits between the Narrator and the user, with veto power.
+        # The Visionary turns a Narrator concept into creative design assets (the
+        # creative cascade). Generation only — the Philosopher still judges it.
+        self.visionary = Visionary(bus=self.bus, llm=self.llm, asset_store=self.assets)
+        # The Philosopher sits between generation and the user, with veto power
+        # over BOTH Q&A answers and creative assets.
         self.philosopher = Philosopher(bus=self.bus, asset_store=self.assets)
         # The Diagnostician watches the whole bus, building CHOREOGRAPHY_LOG
         # telemetry for every turn and standing ready to trip the breaker on a
@@ -109,6 +114,7 @@ class QASystem:
             self.nexus,
             self.archivist,
             self.narrator,
+            self.visionary,
             self.philosopher,
             self.diagnostician,
         ):
@@ -146,6 +152,10 @@ class QASystem:
     # --- the cascade ------------------------------------------------------- #
     async def ask(self, question: str) -> QAResult:
         return await self.nexus.ask(question)
+
+    async def create(self, request: str) -> CreativeResult:
+        """Run a creative cascade: Archivist → Narrator → Visionary → Philosopher."""
+        return await self.nexus.create(request)
 
     # --- the Resonance Cycle (supervised self-improvement) ----------------- #
     async def submit_feedback(

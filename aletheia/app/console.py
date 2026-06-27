@@ -33,10 +33,11 @@ async def _run() -> None:
         f"Prime Directives ({len(system.philosopher.directives.rules)} rules)."
     )
     print("  · Diagnostician monitoring the bus (loops / stalls / circuit breaker).")
+    print("  · Visionary ready for creative briefs (/create).")
     print(f"  · Resonance Cycle ready (operational_policy v{system.policy.version}).")
     print(
         "\nAsk a question about Aletheia. Commands: "
-        "/log  /health  /graph  /feedback  /policy  /quit\n"
+        "/create <brief>  /log  /health  /graph  /feedback  /policy  /quit\n"
     )
 
     last_turn: tuple[str, str] | None = None  # (turn_id, question) of the last answer
@@ -77,6 +78,24 @@ async def _run() -> None:
                 for e in system.policy.history:
                     print(f"    {e['event']} v{e['from_version']}→v{e['to_version']}: {e['reason']}")
             print()
+            continue
+        if question.startswith("/create"):
+            brief = question[len("/create"):].strip()
+            if not brief:
+                print("  usage: /create <a creative brief, e.g. concept art for a new creature>\n")
+                continue
+            print("Creative cascade (Archivist → Narrator → Visionary → Philosopher) ...")
+            cr = await system.create(brief)
+            if not cr.approved:
+                print(f"  ⛔ vetoed — Directive: {cr.directive}\n  reason: {cr.reason}\n")
+                continue
+            a = cr.asset
+            print(f"\naletheia › '{a.title}'\n  {a.concept.text.strip()}\n")
+            print(f"  art direction: {a.visual_brief.subject_description.text.strip()}")
+            pal = a.visual_brief.color_palette
+            print(f"  palette: {pal.name} — " + ", ".join(f"{c.name} {c.rgb.hex}" for c in pal.colors))
+            print(f"  music: {', '.join(a.music_brief.genre_style_suggestions)} | {a.music_brief.key_modality}")
+            print(f"  ✓ approved by the Philosopher   (type /log to see the cascade)\n")
             continue
         if question == "/feedback":
             # Flag the last answer as incorrect and let the Resonance Cycle engage.

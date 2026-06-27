@@ -139,7 +139,7 @@ Each milestone is **independently demoable**. We do them in order; each one is a
 
 ---
 
-### Milestone 6 — Expansion + Hardening (Visionary, then production-readiness)
+### Milestone 6 — Expansion + Hardening (Visionary, then production-readiness) — ✅ DONE (Visionary)
 *The sixth family member, and making it solid.*
 
 - **Visionary** `0x00D4`: simulation / creative asset generation, bringing the creative SDR types online (scene, character, soundscape, color, music). Wired into creative cascades (e.g. the "concept art for a new creature" flow from the design docs).

@@ -24,7 +24,7 @@ from aletheia.bus.base import MessageBus
 from aletheia.memory.asset_store import AssetStore
 from aletheia.protocol.messages import MessageType, SynapseMessage
 from aletheia.protocol.uids import new_uid
-from aletheia.sdr.primitives import AnswerAsset, SdrEthicalAnalysisReport
+from aletheia.sdr.primitives import CreativeAsset, SdrEthicalAnalysisReport
 from aletheia.sil.interest_profile import InterestProfile, InterestRule
 
 
@@ -41,6 +41,22 @@ class QAResult:
     reason: str | None = None  # human-readable veto reason
     report_uid: str | None = None  # the SDR_Ethical_Analysis_Report, for audit
     turn_id: str = ""  # threads the turn's asset chain; used to give feedback
+
+
+@dataclass
+class CreativeResult:
+    """The outcome of a creative turn: the Visionary's package + the verdict."""
+
+    request: str
+    approved: bool
+    title: str = ""
+    asset: CreativeAsset | None = None  # the full creative package, when approved
+    sources: list[str] = field(default_factory=list)
+    confidence: float = 0.0
+    directive: str | None = None  # the directive cited on a veto
+    reason: str | None = None  # human-readable veto reason
+    report_uid: str | None = None
+    turn_id: str = ""
 
 
 def _nexus_profile() -> InterestProfile:
@@ -68,60 +84,98 @@ class NexusMind(FamilyMember):
             name="Nexus-Mind", uid=NEXUS_MIND_UID, bus=bus, interest_profile=_nexus_profile()
         )
         self._assets = asset_store
-        self._pending: dict[str, asyncio.Future[QAResult]] = {}
+        self._pending: dict[str, asyncio.Future] = {}
+        self._modes: dict[str, str] = {}  # turn_id -> "qa" | "creative"
 
     async def ask(self, question: str, *, timeout: float = 60.0) -> QAResult:
         """Run one Q&A cascade and return the result (answer + verdict)."""
-        turn_id = new_uid("TURN", "QA")
+        return await self._run_turn(question, mode="qa", uid_type="QA", timeout=timeout)
+
+    async def create(self, request: str, *, timeout: float = 60.0) -> CreativeResult:
+        """Run one creative cascade (Archivist → Narrator → Visionary → Philosopher)."""
+        return await self._run_turn(request, mode="creative", uid_type="CREATE", timeout=timeout)
+
+    async def _run_turn(self, request: str, *, mode: str, uid_type: str, timeout: float):
+        turn_id = new_uid("TURN", uid_type)
         loop = asyncio.get_event_loop()
-        future: asyncio.Future[QAResult] = loop.create_future()
+        future: asyncio.Future = loop.create_future()
         self._pending[turn_id] = future
+        self._modes[turn_id] = mode
 
         await self.broadcaster.send_trigger(
             target_uid=ARCHIVIST_UID,
             action_to_trigger="RETRIEVE_CONTEXT",
-            parameters={"question": question, "turn_id": turn_id},
+            parameters={"question": request, "turn_id": turn_id, "mode": mode},
         )
         try:
             return await asyncio.wait_for(future, timeout=timeout)
         finally:
             self._pending.pop(turn_id, None)
+            self._modes.pop(turn_id, None)
 
     async def handle_action(
         self, action: str, data: dict[str, Any], message: SynapseMessage
     ) -> None:
         if action == "RELEASE_ANSWER":
-            answer: AnswerAsset = self._assets.get(data["data_asset_uid"])
-            self._resolve(
-                answer.turn_id,
-                QAResult(
-                    question=answer.question,
-                    answer=answer.answer.text,
-                    approved=True,
-                    sources=list(answer.sources),
-                    confidence=answer.confidence.score,
-                    turn_id=answer.turn_id,
-                ),
-            )
+            subject = self._assets.get(data["data_asset_uid"])
+            if isinstance(subject, CreativeAsset):
+                self._resolve(
+                    subject.turn_id,
+                    CreativeResult(
+                        request=subject.request,
+                        approved=True,
+                        title=subject.title,
+                        asset=subject,
+                        sources=list(subject.sources),
+                        confidence=subject.confidence.score,
+                        turn_id=subject.turn_id,
+                    ),
+                )
+            else:  # AnswerAsset — the Q&A path
+                self._resolve(
+                    subject.turn_id,
+                    QAResult(
+                        question=subject.question,
+                        answer=subject.answer.text,
+                        approved=True,
+                        sources=list(subject.sources),
+                        confidence=subject.confidence.score,
+                        turn_id=subject.turn_id,
+                    ),
+                )
         elif action == "HANDLE_VETO":
             report: SdrEthicalAnalysisReport = self._assets.get(data["data_asset_uid"])
             top = report.violations[0] if report.violations else None
             reason = report.reasoning.text
-            self._resolve(
-                report.turn_id,
-                QAResult(
-                    question="",  # the question isn't echoed in the report
-                    answer=(
-                        "⛔ This response was withheld by the Philosopher because it would "
-                        f"violate a Prime Directive ({top.directive_name if top else 'unknown'})."
+            directive = top.directive_name if top else None
+            if self._modes.get(report.turn_id) == "creative":
+                self._resolve(
+                    report.turn_id,
+                    CreativeResult(
+                        request="",
+                        approved=False,
+                        directive=directive,
+                        reason=reason,
+                        report_uid=report.synapse_uid,
+                        turn_id=report.turn_id,
                     ),
-                    approved=False,
-                    directive=top.directive_name if top else None,
-                    reason=reason,
-                    report_uid=report.synapse_uid,
-                    turn_id=report.turn_id,
-                ),
-            )
+                )
+            else:
+                self._resolve(
+                    report.turn_id,
+                    QAResult(
+                        question="",  # the question isn't echoed in the report
+                        answer=(
+                            "⛔ This response was withheld by the Philosopher because it would "
+                            f"violate a Prime Directive ({directive or 'unknown'})."
+                        ),
+                        approved=False,
+                        directive=directive,
+                        reason=reason,
+                        report_uid=report.synapse_uid,
+                        turn_id=report.turn_id,
+                    ),
+                )
 
     def _resolve(self, turn_id: str, result: QAResult) -> None:
         future = self._pending.get(turn_id)

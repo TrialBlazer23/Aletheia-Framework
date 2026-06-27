@@ -107,6 +107,7 @@ class Archivist(FamilyMember):
         params = data.get("parameters", {})
         question = params.get("question", "")
         turn_id = params.get("turn_id", "")
+        mode = params.get("mode", "qa")
 
         passages = self._retrieve_passages(question)
         facts = self._retrieve_facts(question)
@@ -122,6 +123,7 @@ class Archivist(FamilyMember):
             question=question,
             passages=passages,
             facts=facts,
+            mode=mode,
             metadata=SdrMetadataBlock(source_uid=self.uid, owning_model_uid=self.uid),
         )
         self._assets.put(asset.synapse_uid, asset)
