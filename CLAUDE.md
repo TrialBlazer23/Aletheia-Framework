@@ -1,6 +1,6 @@
 # CLAUDE.md — Aletheia Framework
 
-This file is my persistent memory for building **Aletheia** (formerly *Project Chimera*). Read it at the start of every session. It is the single source of truth for **what this system must be**. The build order lives in [`ROADMAP.md`](ROADMAP.md).
+This file is my persistent memory for building **Aletheia** (formerly *Project Chimera*). Read it at the start of every session. It is the single source of truth for **what this system must be**. The build order lives in [`ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
@@ -137,14 +137,14 @@ Encode as machine-readable config (`prime_directives.yaml`). Honest caveat from 
 
 ## 11. Source-of-truth documents (where the design lives)
 
-- `VISION.md` — the manifesto & "why" (the soul of the project).
-- `ARCHITECTURE.md` + `Architecture/` — agents, coordination (Cascade Pathways), memory/learning (Associative Memory Module, Resonance Cycle Protocol), Master Project Snapshot.
+- `docs/VISION.md` — the manifesto & "why" (the soul of the project).
+- `Architecture/ARCHITECTURE.md` + `Architecture/` — agents, coordination (Cascade Pathways), memory/learning (Associative Memory Module, Resonance Cycle Protocol), Master Project Snapshot.
 - `Standards/Synapse_Protocol/` (NSAP-0001, 0003), `Standards/Synapse_Interface_Layer/` (NSAP-0002), `Standards/Synapse_Command_Control/`, `Standards/Synapse_Data_Representation/` (Primitives + ~90 Type_Definitions).
-- `Safety_Protocols/Prime_Directives/`, `SAFETY.md`, `SECURITY.md`.
+- `Safety_Protocols/Prime_Directives/`, `Safety_Protocols/SAFETY.md`, `SECURITY.md`.
 - `RFCs/` — RFC-001 (Resonance) and proposed SP2.0 additions.
-- `ANALYSIS.md` / `QUICK_ASSESSMENT.md` — feasibility, risks, the "build it in this order" guidance.
-- `GLOSSARY.md` — canonical term definitions.
-- `IMPLEMENTATION_ROADMAP.md` — the *aspirational* enterprise timeline (team/budget). **`ROADMAP.md` is the one we actually follow.**
+- `docs/ANALYSIS.md` / `docs/QUICK_ASSESSMENT.md` — feasibility, risks, the "build it in this order" guidance.
+- `docs/GLOSSARY.md` — canonical term definitions.
+- `docs/IMPLEMENTATION_ROADMAP.md` — the *aspirational* enterprise timeline (team/budget). **`docs/ROADMAP.md` is the one we actually follow.**
 
 ---
 

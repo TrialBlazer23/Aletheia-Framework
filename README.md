@@ -11,10 +11,10 @@
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/TrialBlazer23/Aletheia-Framework)
 
-> **Current Status (June 2026):** **Milestones 0–6 are built, tested, and runnable — the six-agent Family is complete.** The Synapse nervous system, the Domino Cascade, the full Family (Nexus-Mind, Archivist, Narrator, Philosopher, Diagnostician, Visionary), the knowledge-graph memory, the supervised **Resonance Cycle** with the **Human Gavel**, and the creative cascade. The whole system runs with one command (`python main.py`) and is covered by a passing test suite. See [`ROADMAP.md`](ROADMAP.md) for the build plan and [`CLAUDE.md`](CLAUDE.md) for the canonical design.
+> **Current Status (June 2026):** **Milestones 0–6 are built, tested, and runnable — the six-agent Family is complete.** The Synapse nervous system, the Domino Cascade, the full Family (Nexus-Mind, Archivist, Narrator, Philosopher, Diagnostician, Visionary), the knowledge-graph memory, the supervised **Resonance Cycle** with the **Human Gavel**, and the creative cascade. The whole system runs with one command (`python main.py`) and is covered by a passing test suite. See [`ROADMAP.md`](docs/ROADMAP.md) for the build plan and [`CLAUDE.md`](CLAUDE.md) for the canonical design.
 
 > **The Philosophy:** Current AI models are Black Boxes. Aletheia is a **Glass Box**. It separates *Generation* (The Narrator) from *Judgment* (The Philosopher) to create agents that are safe, auditable, and capable of recursive self-improvement.
-> *Read the origin story and architectural thesis in [VISION.md](VISION.md).*
+> *Read the origin story and architectural thesis in [VISION.md](docs/VISION.md).*
 
 ---
 
@@ -98,10 +98,10 @@ cp .env.example .env              # then edit .env and add ANTHROPIC_API_KEY=sk-
 ## 📊 Documentation
 
 * **[`CLAUDE.md`](CLAUDE.md)** — the canonical design + build conventions (single source of truth for *what the system must be*).
-* **[`ROADMAP.md`](ROADMAP.md)** — the real, milestone-by-milestone build plan we follow.
-* **[VISION.md](VISION.md)** — the manifesto and architectural thesis.
-* **[QUICK_ASSESSMENT.md](QUICK_ASSESSMENT.md)** / **[ANALYSIS.md](ANALYSIS.md)** — feasibility analysis and technical review.
-* **[IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md)** — the aspirational enterprise-scale timeline (for reference; `ROADMAP.md` is what we actually follow).
+* **[`ROADMAP.md`](docs/ROADMAP.md)** — the real, milestone-by-milestone build plan we follow.
+* **[VISION.md](docs/VISION.md)** — the manifesto and architectural thesis.
+* **[QUICK_ASSESSMENT.md](docs/QUICK_ASSESSMENT.md)** / **[ANALYSIS.md](docs/ANALYSIS.md)** — feasibility analysis and technical review.
+* **[IMPLEMENTATION_ROADMAP.md](docs/IMPLEMENTATION_ROADMAP.md)** — the aspirational enterprise-scale timeline (for reference; `ROADMAP.md` is what we actually follow).
 
 ---
 
@@ -110,7 +110,7 @@ cp .env.example .env              # then edit .env and add ANTHROPIC_API_KEY=sk-
 * `/aletheia`: the implementation — `protocol/` (Synapse), `bus/` (Domino Cascade), `sil/` (Interface Layer), `agents/` (the Family), `safety/` (Prime Directives + validator), `memory/`, `sdr/`, `llm/`, `app/`, `log/`.
 * `/tests`: the test suite.
 * `/Architecture`, `/Standards`, `/Safety_Protocols`, `/RFCs`: the design specifications (the source of truth the implementation is built from).
-* Analysis & planning: `CLAUDE.md`, `ROADMAP.md`, `ANALYSIS.md`, `QUICK_ASSESSMENT.md`.
+* `/docs`: analysis & planning — `VISION.md`, `ROADMAP.md`, `IMPLEMENTATION_ROADMAP.md`, `ANALYSIS.md`, `QUICK_ASSESSMENT.md`, `GLOSSARY.md`. (`CLAUDE.md`, the canonical design, stays at the repo root.)
 
 ---
 

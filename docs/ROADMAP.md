@@ -2,7 +2,7 @@
 
 **Purpose:** This is the *practical* roadmap we actually follow to build Aletheia, the way it was designed. It replaces the theoretical corporate timeline in [`IMPLEMENTATION_ROADMAP.md`](IMPLEMENTATION_ROADMAP.md) (which assumes a 12–15 person team and a ~$3M budget) with a plan scoped for how this project is *really* being built: **by Claude (the engineer) working with the project owner (the designer, who does not code).**
 
-> Read this together with [`CLAUDE.md`](CLAUDE.md), which is the canonical, faithful description of the design. This roadmap says *what we build and in what order*. CLAUDE.md says *what the thing must be*.
+> Read this together with [`CLAUDE.md`](../CLAUDE.md), which is the canonical, faithful description of the design. This roadmap says *what we build and in what order*. CLAUDE.md says *what the thing must be*.
 
 ---
 

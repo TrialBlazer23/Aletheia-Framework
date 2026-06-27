@@ -53,7 +53,7 @@ When implementing or extending the Aletheia Framework, please:
 
 1. **Never commit secrets**: API keys, passwords, or sensitive credentials should never be in the codebase
 2. **Validate inputs**: Always validate and sanitize user inputs, especially in agent interactions
-3. **Follow the Prime Directives**: Adhere to the safety protocols outlined in [SAFETY.md](SAFETY.md)
+3. **Follow the Prime Directives**: Adhere to the safety protocols outlined in [SAFETY.md](Safety_Protocols/SAFETY.md)
 4. **Sandbox execution**: Run agents in isolated, containerized environments
 5. **Audit logging**: Maintain comprehensive logs for all agent actions and decisions
 6. **Human-in-the-Loop**: Implement approval gates for critical or sensitive operations
@@ -69,7 +69,7 @@ The Aletheia Framework includes several built-in security features:
 - **Sandboxed Environment**: Default isolation from networks and systems
 - **Human Gavel**: Mandatory human approval for critical state changes
 
-For more details, see [SAFETY.md](SAFETY.md).
+For more details, see [SAFETY.md](Safety_Protocols/SAFETY.md).
 
 ## Attribution
 
