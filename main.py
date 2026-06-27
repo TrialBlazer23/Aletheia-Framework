@@ -13,6 +13,10 @@ command.
 * ``python main.py --knowledge``   → the Milestone 4 knowledge-graph demo: answer
                                     relational questions by graph traversal, each
                                     fact traceable to a source.
+* ``python main.py --resonance``   → the Milestone 5 Resonance Cycle demo: replay
+                                    the satire-as-fact failure; watch the system
+                                    detect → analyse → propose → sandbox-verify →
+                                    Human-Gavel-approve → heal → roll back.
 """
 
 import sys
@@ -31,6 +35,10 @@ def main() -> None:
         from aletheia.demo.knowledge_demo import main as run_knowledge
 
         run_knowledge()
+    elif "--resonance" in sys.argv:
+        from aletheia.demo.resonance_demo import main as run_resonance
+
+        run_resonance()
     else:
         from aletheia.app.console import main as run_console
 

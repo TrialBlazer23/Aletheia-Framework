@@ -125,7 +125,7 @@ Each milestone is **independently demoable**. We do them in order; each one is a
 
 ---
 
-### Milestone 5 — Learning, Supervised (Resonance Cycle + Human Gavel)
+### Milestone 5 — Learning, Supervised (Resonance Cycle + Human Gavel) — ✅ DONE
 *The heartbeat: the system turns its own failures into wisdom — with you holding the gavel.*
 
 - **Performance analytics** over `CHOREOGRAPHY_LOG`s: Efficiency / Fidelity / Coordination / Alignment indices.

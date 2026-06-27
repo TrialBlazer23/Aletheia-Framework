@@ -218,6 +218,90 @@ class SdrAnomalyReport(_SdrModel):
     metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
 
 
+# --------------------------------------------------------------------------- #
+# Tier-3 — the Resonance Cycle assets (Milestone 5, RFC-001 / NSAP-ARCH-003)
+# Supervised self-improvement: the system turns its own logged failures into a
+# verified, human-approved policy change. Every artifact below is auditable.
+# --------------------------------------------------------------------------- #
+class SdrPerformanceIndices(_SdrModel):
+    """The four normalized "System Harmony" indices (RFC-001 §3.2 weights)."""
+
+    synapse_uid: str = Field(
+        default_factory=lambda: new_uid("ASSET", "PERFORMANCE_INDICES"), alias="Synapse_UID"
+    )
+    turn_id: str = Field(default="", alias="Turn_ID")  # the turn these indices score
+    efficiency: float = Field(alias="Efficiency_Index")  # resource cost vs baseline
+    fidelity: float = Field(alias="Fidelity_Index")  # output matched the objective
+    coordination: float = Field(alias="Coordination_Index")  # clean inter-agent flow
+    alignment: float = Field(alias="Alignment_Index")  # constitutional compliance
+    harmony: float = Field(alias="System_Harmony")  # weighted aggregate (0.20/0.30/0.20/0.30)
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+class SdrCausalFactor(_SdrModel):
+    """One identified cause within a root-cause analysis (`SDR_Causal_Factor`)."""
+
+    description: str = Field(alias="Description")
+    locus: str = Field(alias="Locus")  # where in the system (agent / parameter)
+    evidence: str = Field(alias="Evidence")  # the cascade-log / asset receipt
+
+
+class SdrRootCauseAnalysis(_SdrModel):
+    """The FAILURE_REPORT (RFC-001 §2.2 / `SDR_Root_Cause_Analysis_Output`).
+
+    Harmonic Analysis traces the Domino Cascade backward from a dissonance event
+    to the decision or data point that caused it.
+    """
+
+    synapse_uid: str = Field(
+        default_factory=lambda: new_uid("ASSET", "ROOT_CAUSE_ANALYSIS"), alias="Synapse_UID"
+    )
+    turn_id: str = Field(alias="Turn_ID")
+    dissonance_summary: str = Field(alias="Dissonance_Summary")
+    root_causes: list[SdrCausalFactor] = Field(default_factory=list, alias="Root_Causes")
+    recommended_action: str = Field(alias="Recommended_Action")
+    confidence: SdrConfidenceScore = Field(alias="Confidence")
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+class SdrPolicyModificationProposal(_SdrModel):
+    """A Policy Modification Proposal — the `POLICY_UPDATE` candidate (RFC-001 §2.3).
+
+    The concrete candidate policy it would apply is carried alongside (a typed
+    ``OperationalPolicy``); this asset is the auditable *description* of the change.
+    """
+
+    synapse_uid: str = Field(
+        default_factory=lambda: new_uid("ASSET", "POLICY_PROPOSAL"), alias="Synapse_UID"
+    )
+    turn_id: str = Field(alias="Turn_ID")
+    target: str = Field(alias="Target")  # agent / parameter being adjusted
+    change_summary: str = Field(alias="Change_Summary")
+    rationale: str = Field(alias="Rationale")
+    impact_class: str = Field(alias="Impact_Class")  # LOW | MEDIUM | HIGH | CRITICAL
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+class SdrVerificationResult(_SdrModel):
+    """The Runtime Safety Kernel's verdict on a proposal (RFC-001 §3.3).
+
+    A proposal is VERIFIED only if it clears the Prime Directives *and* its
+    sandbox simulation shows it fixes the fault without collateral harm.
+    """
+
+    synapse_uid: str = Field(
+        default_factory=lambda: new_uid("ASSET", "VERIFICATION_RESULT"), alias="Synapse_UID"
+    )
+    turn_id: str = Field(default="", alias="Turn_ID")  # the turn whose fix this judges
+    proposal_uid: str = Field(alias="Proposal_UID")
+    status: str = Field(alias="Status")  # VERIFIED | REJECTED
+    cited_directive: str | None = Field(default=None, alias="Cited_Directive")
+    reasoning: SdrTextBlock = Field(alias="Reasoning")
+    sandbox_summary: str = Field(alias="Sandbox_Summary")
+    confidence: SdrConfidenceScore = Field(alias="Confidence")
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
 # RetrievedContextAsset references SdrFactAssertion, which is defined above it in
 # source order via a forward reference — resolve it now that both exist.
 RetrievedContextAsset.model_rebuild()
