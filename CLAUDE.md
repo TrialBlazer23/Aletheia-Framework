@@ -150,6 +150,8 @@ Encode as machine-readable config (`prime_directives.yaml`). Honest caveat from 
 
 ## 12. Current status & next action
 
-- **Status:** Design complete; **pre-code.** No implementation exists yet. Working branch: `claude/framework-roadmap-setup-94bf37`.
-- **Next action:** Milestone 0 in `ROADMAP.md` — scaffold the repo and build the Synapse nervous system (protocol + in-process bus + SIL + Cascade Log), proven by a two-agent TRIGGER → ACK → EVENT handshake.
-- **Three open owner decisions** (defaults chosen, see ROADMAP §"Decisions I need from you"): LLM provider (default Claude API), first use case (default: Q&A over Aletheia's own docs), Resonance autonomy ceiling (default: Human Gavel forever).
+- **Status:** **Milestone 0 complete.** The Synapse nervous system is built and runs: protocol (`aletheia/protocol/`), in-process bus (`aletheia/bus/`), SIL — Listener/Broadcaster/InterestProfile (`aletheia/sil/`), `FamilyMember` base with the 4-step handshake (`aletheia/agents/`), and the append-only Cascade Log (`aletheia/log/`). Proven by `python main.py` (two-agent TRIGGER → ACK → EVENT → TASK_COMPLETE domino) and 18 passing tests (`python -m pytest`). Working branch: `claude/framework-roadmap-setup-94bf37`.
+- **How to run:** `python -m venv .venv && . .venv/bin/activate && pip install -e ".[dev]"`, then `python main.py` (demo) or `python -m pytest` (tests).
+- **Next action:** Milestone 1 in `ROADMAP.md` — the first living 3-agent cascade (Nexus-Mind → Archivist → Narrator) with the `LLMProvider` interface (Claude default), SDR Tier-1 primitives, and Q&A over Aletheia's own docs.
+- **Owner decisions (confirmed defaults):** LLM provider = **Claude API**; first use case = **Q&A over Aletheia's own docs**; Resonance autonomy ceiling = **Human Gavel forever**. Revisit any of these with the owner before they constrain a milestone.
+- **Conventions proven in M0 to keep:** Pydantic field *aliases* carry the exact hyphenated wire names (`Message-ID`, `Event-Name`, …) while Python uses snake_case; everything async goes through the bus so it lands in the Cascade Log; dependencies sit behind interfaces (`MessageBus` done; `LLMProvider`/`VectorStore`/`GraphStore` next).
