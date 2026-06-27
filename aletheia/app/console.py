@@ -19,13 +19,18 @@ async def _run() -> None:
     system = QASystem()
     n = system.ingest_own_docs()
     print(f"  · Archivist ingested {n} passages from Aletheia's own documents.")
+    if system.graph is not None:
+        print(
+            f"  · Knowledge graph: {system.graph.num_entities} entities, "
+            f"{system.graph.num_facts} facts ({system.extractor.name})."
+        )
     print(f"  · Narrator brain: {system.llm.name}")
     print(
         f"  · Philosopher enforcing {len(system.philosopher.directives.directives)} "
         f"Prime Directives ({len(system.philosopher.directives.rules)} rules)."
     )
     print("  · Diagnostician monitoring the bus (loops / stalls / circuit breaker).")
-    print("\nAsk a question about Aletheia. Commands: /log  /health  /quit\n")
+    print("\nAsk a question about Aletheia. Commands: /log  /health  /graph  /quit\n")
 
     last_seq = 0
     while True:
@@ -45,6 +50,16 @@ async def _run() -> None:
             print("Diagnostician — cascade health:")
             print(system.diagnostician.pretty_health())
             print()
+            continue
+        if question == "/graph":
+            if system.graph is None:
+                print("  (knowledge graph unavailable)\n")
+                continue
+            print(
+                f"Knowledge graph: {system.graph.num_entities} entities, "
+                f"{system.graph.num_facts} facts. Top facts for your next question "
+                "are shown with sources when you ask.\n"
+            )
             continue
 
         before = len(system.cascade_log.entries)

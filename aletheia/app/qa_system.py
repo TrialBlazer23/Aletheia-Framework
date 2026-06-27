@@ -1,8 +1,10 @@
-"""``QASystem`` — assembles the 3-agent cascade into a question-answering system.
+"""``QASystem`` — assembles the Family into a question-answering system.
 
-This is the Milestone 1 deliverable: Nexus-Mind → Archivist → Narrator, grounded
-in a corpus (by default Aletheia's own design docs), with every message recorded
-in the Cascade Log. One object you can ``await system.ask("...")`` against.
+Nexus-Mind → Archivist → Narrator → Philosopher, watched by the Diagnostician,
+grounded in a corpus (by default Aletheia's own design docs), with every message
+recorded in the Cascade Log. One object you can ``await system.ask("...")``
+against. Milestone 4 gives the Archivist a knowledge graph alongside its vectors,
+so retrieval is hybrid (vector passages + traversed, cited facts).
 """
 
 from __future__ import annotations
@@ -22,6 +24,8 @@ from aletheia.llm.factory import get_default_provider
 from aletheia.log.cascade_log import CascadeLog
 from aletheia.memory.asset_store import AssetStore
 from aletheia.memory.corpus import Document, load_markdown_corpus
+from aletheia.memory.extractor import KnowledgeExtractor, get_default_extractor
+from aletheia.memory.graph_store import GraphStore, get_default_graph_store
 from aletheia.memory.vector_store import TfidfVectorStore, VectorStore
 
 # The repository root — used to ingest Aletheia's own docs as the default corpus.
@@ -35,6 +39,9 @@ class QASystem:
         llm: LLMProvider | None = None,
         vector_store: VectorStore | None = None,
         cascade_log: CascadeLog | None = None,
+        graph_store: GraphStore | None = None,
+        extractor: KnowledgeExtractor | None = None,
+        use_graph: bool = True,
     ) -> None:
         self.cascade_log = cascade_log or CascadeLog(path="cascade_log.jsonl")
         # The circuit breaker the Diagnostician trips; the bus consults it.
@@ -49,10 +56,23 @@ class QASystem:
             load_local_env()
         self.llm = llm or get_default_provider()
         self.vectors = vector_store or TfidfVectorStore()
+        # The knowledge graph (Milestone 4). Defaults on, but degrades gracefully:
+        # if NetworkX/spaCy aren't installed, the graph is None and the Archivist
+        # runs vector-only. ``use_graph=False`` opts out (e.g. for speed in tests).
+        if use_graph:
+            self.graph = graph_store if graph_store is not None else get_default_graph_store()
+            self.extractor = extractor or (get_default_extractor() if self.graph else None)
+        else:
+            self.graph = None
+            self.extractor = None
 
         self.nexus = NexusMind(bus=self.bus, asset_store=self.assets)
         self.archivist = Archivist(
-            bus=self.bus, vector_store=self.vectors, asset_store=self.assets
+            bus=self.bus,
+            vector_store=self.vectors,
+            asset_store=self.assets,
+            graph_store=self.graph,
+            extractor=self.extractor,
         )
         self.narrator = Narrator(bus=self.bus, llm=self.llm, asset_store=self.assets)
         # The Philosopher sits between the Narrator and the user, with veto power.
@@ -75,7 +95,9 @@ class QASystem:
 
     # --- corpus ------------------------------------------------------------ #
     def ingest(self, documents: list[Document]) -> int:
+        """Index documents for vector search *and* build the knowledge graph."""
         self.vectors.add_documents(documents)
+        self.archivist.build_graph(documents)
         return len(documents)
 
     def ingest_own_docs(self) -> int:

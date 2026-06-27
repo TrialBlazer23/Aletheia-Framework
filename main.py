@@ -10,6 +10,9 @@ command.
 * ``python main.py --diagnostics`` → the Milestone 3 immune-system demo: induce
                                     a loop and a hung agent; watch the
                                     Diagnostician detect, contain, and heal.
+* ``python main.py --knowledge``   → the Milestone 4 knowledge-graph demo: answer
+                                    relational questions by graph traversal, each
+                                    fact traceable to a source.
 """
 
 import sys
@@ -24,6 +27,10 @@ def main() -> None:
         from aletheia.demo.diagnostician_demo import main as run_diagnostics
 
         run_diagnostics()
+    elif "--knowledge" in sys.argv:
+        from aletheia.demo.knowledge_demo import main as run_knowledge
+
+        run_knowledge()
     else:
         from aletheia.app.console import main as run_console
 

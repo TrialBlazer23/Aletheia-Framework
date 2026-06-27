@@ -113,7 +113,7 @@ Each milestone is **independently demoable**. We do them in order; each one is a
 
 ---
 
-### Milestone 4 — Ground Truth (Knowledge-Graph Archivist)
+### Milestone 4 — Ground Truth (Knowledge-Graph Archivist) — ✅ DONE
 *The anti-hallucination core the whole thesis rests on.*
 
 - **Archivist v2**: spaCy (`en_core_web_lg`) dependency parsing → entities + relations → graph store (NetworkX/SQLite, then embedded Kùzu) behind a `GraphStore` interface. **Hybrid retrieval**: vector search + graph traversal, merged and ranked.
