@@ -2,7 +2,13 @@
 
 import asyncio
 
-from aletheia.agents.family import ARCHIVIST_UID, NARRATOR_UID, NEXUS_MIND_UID
+from aletheia.agents.family import (
+    ARCHIVIST_UID,
+    NARRATOR_UID,
+    NEXUS_MIND_UID,
+    PHILOSOPHER_UID,
+)
+from aletheia.agents.nexus_mind import QAResult
 from aletheia.app.qa_system import QASystem
 from aletheia.config import load_local_env
 from aletheia.llm.base import LLMProvider
@@ -11,7 +17,7 @@ from aletheia.llm.offline_provider import OfflineProvider
 from aletheia.log.cascade_log import CascadeLog
 from aletheia.memory.corpus import Document
 from aletheia.memory.vector_store import TfidfVectorStore
-from aletheia.sdr.primitives import AnswerAsset, SdrConfidenceScore, SdrMetadataBlock
+from aletheia.sdr.primitives import SdrConfidenceScore, SdrMetadataBlock
 
 
 # --- memory ---------------------------------------------------------------- #
@@ -103,12 +109,13 @@ def _qa_system(llm: LLMProvider) -> QASystem:
 
 def test_qa_cascade_offline_returns_grounded_answer():
     system = _qa_system(OfflineProvider())
-    answer = asyncio.run(system.ask("What are the Prime Directives?"))
+    result = asyncio.run(system.ask("What are the Prime Directives?"))
 
-    assert isinstance(answer, AnswerAsset)
-    assert "SAFETY.md › Prime Directives" in answer.sources
-    assert answer.confidence.score > 0.0
-    # The full Domino Cascade is recorded in order.
+    assert isinstance(result, QAResult)
+    assert result.approved is True
+    assert "SAFETY.md › Prime Directives" in result.sources
+    assert result.confidence > 0.0
+    # The full Domino Cascade now runs through the Philosopher before the user.
     flow = [
         (e["message"]["Header"]["Message-Type"], e["message"]["Header"]["Source-UID"])
         for e in system.cascade_log.entries
@@ -118,7 +125,9 @@ def test_qa_cascade_offline_returns_grounded_answer():
         ("STATE_CHANGE", ARCHIVIST_UID),
         ("EVENT", ARCHIVIST_UID),
         ("STATE_CHANGE", NARRATOR_UID),
-        ("EVENT", NARRATOR_UID),
+        ("EVENT", NARRATOR_UID),  # DRAFT_READY
+        ("STATE_CHANGE", PHILOSOPHER_UID),
+        ("EVENT", PHILOSOPHER_UID),  # APPROVED
         ("STATE_CHANGE", NEXUS_MIND_UID),
     ]
 
@@ -135,12 +144,31 @@ class _FakeLiveProvider(LLMProvider):
         return "Grounded answer composed from the provided context."
 
 
+class _FailingLiveProvider(LLMProvider):
+    name = "Failing live"
+    is_live = True
+
+    def generate(self, *, system, user, max_tokens=2048):
+        raise RuntimeError("credit balance too low")
+
+
+def test_qa_cascade_degrades_gracefully_when_live_model_fails():
+    # A live model error must not hang the turn — the Narrator falls back to a
+    # grounded extract and the cascade still completes.
+    system = _qa_system(_FailingLiveProvider())
+    result = asyncio.run(asyncio.wait_for(system.ask("What are the Prime Directives?"), timeout=10))
+    assert result.approved is True
+    assert "grounded extract" in result.answer.lower()
+    assert result.sources  # still grounded with sources
+
+
 def test_qa_cascade_calls_live_provider_with_context():
     fake = _FakeLiveProvider()
     system = _qa_system(fake)
-    answer = asyncio.run(system.ask("What are the Prime Directives?"))
+    result = asyncio.run(system.ask("What are the Prime Directives?"))
 
-    assert answer.answer.text == "Grounded answer composed from the provided context."
+    assert result.answer == "Grounded answer composed from the provided context."
+    assert result.approved is True
     assert len(fake.calls) == 1
     _system_prompt, user = fake.calls[0]
     # The Narrator must hand the retrieved context to the model (grounding).

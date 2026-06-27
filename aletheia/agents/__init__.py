@@ -17,13 +17,16 @@ from aletheia.agents.family import (
 )
 from aletheia.agents.family_member import FamilyMember
 from aletheia.agents.narrator import Narrator
-from aletheia.agents.nexus_mind import NexusMind
+from aletheia.agents.nexus_mind import NexusMind, QAResult
+from aletheia.agents.philosopher import Philosopher
 
 __all__ = [
     "FamilyMember",
     "NexusMind",
+    "QAResult",
     "Archivist",
     "Narrator",
+    "Philosopher",
     "NEXUS_MIND_UID",
     "ARCHIVIST_UID",
     "NARRATOR_UID",

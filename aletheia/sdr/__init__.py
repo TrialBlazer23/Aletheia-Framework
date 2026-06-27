@@ -14,6 +14,8 @@ from aletheia.sdr.primitives import (
     AnswerAsset,
     RetrievedContextAsset,
     SdrConfidenceScore,
+    SdrDirectiveViolation,
+    SdrEthicalAnalysisReport,
     SdrMetadataBlock,
     SdrSourcePassage,
     SdrTextBlock,
@@ -28,4 +30,6 @@ __all__ = [
     "SdrSourcePassage",
     "RetrievedContextAsset",
     "AnswerAsset",
+    "SdrDirectiveViolation",
+    "SdrEthicalAnalysisReport",
 ]

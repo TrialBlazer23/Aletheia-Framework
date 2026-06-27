@@ -80,3 +80,35 @@ class AnswerAsset(_SdrModel):
     sources: list[str] = Field(default_factory=list, alias="Sources")
     confidence: SdrConfidenceScore = Field(alias="Confidence")
     metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+class SdrDirectiveViolation(_SdrModel):
+    """One cited Prime-Directive violation within an analysis report."""
+
+    rule_name: str = Field(alias="Rule_Name")
+    directive_id: str = Field(alias="Directive_ID")
+    directive_name: str = Field(alias="Directive_Name")
+    severity: str = Field(alias="Severity")
+    evidence: str = Field(alias="Evidence")
+
+
+class SdrEthicalAnalysisReport(_SdrModel):
+    """The Philosopher's verdict on an output, with cited directives + reasoning.
+
+    Anti-hallucination by construction: the verdict must cite the specific
+    directive(s) and the evidence that triggered it — the Philosopher cannot
+    veto (or approve) on vibes.
+    """
+
+    synapse_uid: str = Field(
+        default_factory=lambda: new_uid("ASSET", "ETHICAL_ANALYSIS"), alias="Synapse_UID"
+    )
+    turn_id: str = Field(alias="Turn_ID")
+    subject_asset_uid: str = Field(alias="Subject_Asset_UID")  # the answer being judged
+    verdict: str = Field(alias="Verdict")  # APPROVED | REJECTED
+    violations: list[SdrDirectiveViolation] = Field(default_factory=list, alias="Violations")
+    flags: list[SdrDirectiveViolation] = Field(default_factory=list, alias="Flags")
+    reasoning: SdrTextBlock = Field(alias="Reasoning")
+    confidence: SdrConfidenceScore = Field(alias="Confidence")
+    escalate_to_human: bool = Field(default=False, alias="Escalate_To_Human")
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")

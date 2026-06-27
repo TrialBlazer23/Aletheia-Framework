@@ -92,15 +92,33 @@ class Narrator(FamilyMember):
                 "I couldn't find anything in Aletheia's documents that addresses that. "
                 "Try rephrasing, or ask about the architecture, the agents, or the protocols."
             )
-        context_block = "\n\n".join(
-            f"[Source: {p.data_source}]\n{p.text.text}" for p in context.passages
-        )
         if self._llm.is_live:
+            context_block = "\n\n".join(
+                f"[Source: {p.data_source}]\n{p.text.text}" for p in context.passages
+            )
             user = f"Question: {context.question}\n\nContext passages:\n{context_block}"
-            return self._llm.generate(system=_SYSTEM_PROMPT, user=user, max_tokens=1024)
-        # Offline: an honest extractive answer from the top passage(s).
+            try:
+                return self._llm.generate(system=_SYSTEM_PROMPT, user=user, max_tokens=1024)
+            except Exception as exc:  # noqa: BLE001 — degrade, never hang the cascade
+                # A live model failure (no credits, bad key, network) must not stall
+                # the whole turn. Fall back to a grounded extractive answer.
+                print(
+                    f"[aletheia] Narrator: live model call failed ({type(exc).__name__}); "
+                    "falling back to a grounded extract."
+                )
+                return self._extractive(context, live_failed=True)
+        return self._extractive(context)
+
+    @staticmethod
+    def _extractive(context: RetrievedContextAsset, *, live_failed: bool = False) -> str:
+        """An honest answer built directly from the top retrieved passage."""
         top = context.passages[0]
+        prefix = (
+            "[grounded extract — the live model was unavailable]"
+            if live_failed
+            else "[offline answer — no LLM configured]"
+        )
         return (
-            "[offline answer — no LLM configured] The most relevant passage in Aletheia's "
-            f"documents (source: {top.data_source}) says:\n\n{top.text.text}"
+            f"{prefix} The most relevant passage in Aletheia's documents "
+            f"(source: {top.data_source}) says:\n\n{top.text.text}"
         )
