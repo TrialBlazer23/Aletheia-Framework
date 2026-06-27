@@ -12,13 +12,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "httpx>=0.24"]   # httpx powers FastAPI's TestClient
 # The spaCy English model. Installed here so `pip install -e ".[graph]"` gives a
 # working knowledge graph out of the box; the system also degrades gracefully to
 # a rule-based extractor if it's absent. The design names en_core_web_lg — the
 # smaller model has the same dependency parser with a lighter footprint.
 graph = [
     "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+]
+# The browser interface (ROADMAP: "a tiny FastAPI status page when needed").
+web = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
 ]
 
 [build-system]
@@ -30,6 +35,7 @@ include = ["aletheia*"]
 
 [tool.setuptools.package-data]
 "aletheia.safety" = ["*.yaml"]
+"aletheia.web" = ["static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
