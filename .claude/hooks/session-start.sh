@@ -19,11 +19,20 @@ cd "${CLAUDE_PROJECT_DIR:-.}"
 # Archivist's knowledge graph). Idempotent and cache-friendly — safe to re-run.
 python -m pip install --quiet -e ".[dev,graph]"
 
-# Belt-and-suspenders: ensure the spaCy model is importable. If the [graph]
-# wheel URL is ever unreachable, fall back to the spaCy downloader; if that also
-# fails, the Archivist degrades to its rule-based extractor (system still runs).
-python -c "import en_core_web_sm" 2>/dev/null \
-  || python -m spacy download en_core_web_sm --quiet 2>/dev/null \
-  || echo "[aletheia] note: spaCy model unavailable; Archivist will use the rule-based extractor."
+# Belt-and-suspenders: ensure spaCy genuinely *loads the model*, not just that
+# the package is present. `import spacy` pulls in spaCy's CLI, which needs
+# transitive deps like `click` (via typer) that have been seen missing from
+# pre-baked images — leaving the model installed but `import spacy` raising
+# ModuleNotFoundError, which silently drops the Archivist to its rule-based
+# extractor. So: try a real load; if it fails, repair the install (click/typer),
+# then fall back to the downloader; if all of that fails, the system still runs
+# on the rule-based extractor.
+if ! python -c "import spacy; spacy.load('en_core_web_sm')" 2>/dev/null; then
+  python -m pip install --quiet "click>=8.0" "typer>=0.9" 2>/dev/null || true
+  python -c "import en_core_web_sm" 2>/dev/null \
+    || python -m spacy download en_core_web_sm --quiet 2>/dev/null || true
+  python -c "import spacy; spacy.load('en_core_web_sm')" 2>/dev/null \
+    || echo "[aletheia] note: spaCy unavailable; Archivist will use the rule-based extractor."
+fi
 
 echo "[aletheia] SessionStart: dependencies installed (anthropic + pytest + knowledge graph ready)."
