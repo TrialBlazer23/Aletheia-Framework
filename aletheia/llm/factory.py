@@ -14,6 +14,9 @@ from aletheia.llm.offline_provider import OfflineProvider
 
 
 def get_default_provider() -> LLMProvider:
+    # Note: this reads the *current* environment only. Loading a local .env file
+    # is done at the application boundary (QASystem), not here, so this function
+    # stays deterministic for tests and callers that manage their own env.
     if os.getenv("ANTHROPIC_API_KEY"):
         try:
             from aletheia.llm.anthropic_provider import AnthropicProvider

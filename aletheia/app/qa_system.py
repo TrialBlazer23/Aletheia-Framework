@@ -13,6 +13,7 @@ from aletheia.agents.archivist import Archivist
 from aletheia.agents.narrator import Narrator
 from aletheia.agents.nexus_mind import NexusMind
 from aletheia.bus.in_process import InProcessBus
+from aletheia.config import load_local_env
 from aletheia.llm.base import LLMProvider
 from aletheia.llm.factory import get_default_provider
 from aletheia.log.cascade_log import CascadeLog
@@ -36,6 +37,10 @@ class QASystem:
         self.cascade_log = cascade_log or CascadeLog(path="cascade_log.jsonl")
         self.bus = InProcessBus(cascade_log=self.cascade_log)
         self.assets = AssetStore()
+        # Pick up a key from a local .env file (no-op if absent) before choosing
+        # the provider. An explicitly-passed llm skips provider selection entirely.
+        if llm is None:
+            load_local_env()
         self.llm = llm or get_default_provider()
         self.vectors = vector_store or TfidfVectorStore()
 
