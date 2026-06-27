@@ -61,12 +61,19 @@ class SdrSourcePassage(_SdrModel):
 
 
 class RetrievedContextAsset(_SdrModel):
-    """The Archivist's output: question + grounded passages, addressable by UID."""
+    """The Archivist's output: question + grounded context, addressable by UID.
+
+    Milestone 4 makes retrieval *hybrid*: ``passages`` come from vector search and
+    ``facts`` come from traversing the knowledge graph. Either may be empty; the
+    Narrator uses whichever grounds the answer best, and facts let it answer
+    relational questions ("what does X enforce?") with a cited triple.
+    """
 
     synapse_uid: str = Field(default_factory=lambda: new_uid("ASSET", "RETRIEVED_CONTEXT"), alias="Synapse_UID")
     turn_id: str = Field(alias="Turn_ID")
     question: str = Field(alias="Question")
     passages: list[SdrSourcePassage] = Field(default_factory=list, alias="Passages")
+    facts: list["SdrFactAssertion"] = Field(default_factory=list, alias="Facts")
     metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
 
 
@@ -111,6 +118,44 @@ class SdrEthicalAnalysisReport(_SdrModel):
     reasoning: SdrTextBlock = Field(alias="Reasoning")
     confidence: SdrConfidenceScore = Field(alias="Confidence")
     escalate_to_human: bool = Field(default=False, alias="Escalate_To_Human")
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+# --------------------------------------------------------------------------- #
+# Tier-3 — the Archivist's knowledge-graph assets (Milestone 4)
+# The neuro-symbolic heart: deterministically-parsed entities + relations, each
+# carrying mandatory source attribution + confidence (the anti-hallucination
+# patterns from §6 — no claim without a citation).
+# --------------------------------------------------------------------------- #
+class SdrKnowledgeGraphElement(_SdrModel):
+    """One node in the knowledge graph — an entity with its type + provenance."""
+
+    synapse_uid: str = Field(
+        default_factory=lambda: new_uid("ASSET", "KG_ELEMENT"), alias="Synapse_UID"
+    )
+    name: str = Field(alias="Name")
+    entity_type: str = Field(alias="Entity_Type")  # controlled vocab (PERSON, CONCEPT, ...)
+    sources: list[str] = Field(default_factory=list, alias="Sources")
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+class SdrFactAssertion(_SdrModel):
+    """One relation (subject–predicate–object) the Archivist asserts.
+
+    Anti-hallucination by construction: a fact is meaningless without its
+    ``Data_Source`` and the ``Evidence`` sentence it was parsed from, plus a
+    quantified confidence. The Narrator may only state facts that carry these.
+    """
+
+    synapse_uid: str = Field(
+        default_factory=lambda: new_uid("ASSET", "FACT"), alias="Synapse_UID"
+    )
+    subject: str = Field(alias="Subject")
+    predicate: str = Field(alias="Predicate")
+    object: str = Field(alias="Object")
+    data_source: str = Field(alias="Data_Source")  # where the fact was found
+    evidence: str = Field(alias="Evidence")  # the source sentence (the receipt)
+    confidence: SdrConfidenceScore = Field(alias="Confidence")
     metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
 
 
@@ -171,3 +216,8 @@ class SdrAnomalyReport(_SdrModel):
     participants: list[str] = Field(default_factory=list, alias="Participants")
     action_taken: str = Field(alias="Action_Taken")
     metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+# RetrievedContextAsset references SdrFactAssertion, which is defined above it in
+# source order via a forward reference — resolve it now that both exist.
+RetrievedContextAsset.model_rebuild()

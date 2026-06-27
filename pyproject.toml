@@ -7,10 +7,19 @@ dependencies = [
     "pydantic>=2.0",
     "pyyaml>=6.0",
     "anthropic>=0.40",
+    "spacy>=3.7",       # deterministic dependency parsing — the Archivist's neuro-symbolic core
+    "networkx>=3.0",    # the in-process knowledge graph (GraphStore)
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+# The spaCy English model. Installed here so `pip install -e ".[graph]"` gives a
+# working knowledge graph out of the box; the system also degrades gracefully to
+# a rule-based extractor if it's absent. The design names en_core_web_lg — the
+# smaller model has the same dependency parser with a lighter footprint.
+graph = [
+    "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
+]
 
 [build-system]
 requires = ["setuptools>=68"]

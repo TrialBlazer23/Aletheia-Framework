@@ -14,8 +14,16 @@ fi
 
 cd "${CLAUDE_PROJECT_DIR:-.}"
 
-# Editable install with dev extras: pydantic, pyyaml, anthropic (live Claude),
-# and pytest. Idempotent and cache-friendly — safe to re-run.
-python -m pip install --quiet -e ".[dev]"
+# Editable install with dev + graph extras: pydantic, pyyaml, anthropic (live
+# Claude), pytest, plus spaCy + networkx and the en_core_web_sm model (the
+# Archivist's knowledge graph). Idempotent and cache-friendly — safe to re-run.
+python -m pip install --quiet -e ".[dev,graph]"
 
-echo "[aletheia] SessionStart: dependencies installed (anthropic + pytest ready)."
+# Belt-and-suspenders: ensure the spaCy model is importable. If the [graph]
+# wheel URL is ever unreachable, fall back to the spaCy downloader; if that also
+# fails, the Archivist degrades to its rule-based extractor (system still runs).
+python -c "import en_core_web_sm" 2>/dev/null \
+  || python -m spacy download en_core_web_sm --quiet 2>/dev/null \
+  || echo "[aletheia] note: spaCy model unavailable; Archivist will use the rule-based extractor."
+
+echo "[aletheia] SessionStart: dependencies installed (anthropic + pytest + knowledge graph ready)."

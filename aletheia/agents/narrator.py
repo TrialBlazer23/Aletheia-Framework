@@ -30,9 +30,10 @@ from aletheia.sil.interest_profile import InterestProfile, InterestRule
 
 _SYSTEM_PROMPT = (
     "You are the Narrator of the Aletheia system. Answer the user's question using ONLY "
-    "the provided context passages from Aletheia's own design documents. Cite the sources "
-    "you used by their labels. If the context does not contain the answer, say so plainly "
-    "rather than guessing. Be clear and concise."
+    "the provided context — grounded facts from Aletheia's knowledge graph and passages "
+    "from its design documents. Prefer the graph facts for relational questions (who does "
+    "what). Cite the sources you used by their labels. If the context does not contain the "
+    "answer, say so plainly rather than guessing. Be clear and concise."
 )
 
 
@@ -64,10 +65,17 @@ class Narrator(FamilyMember):
             return
         context: RetrievedContextAsset = self._assets.get(data["data_asset_uid"])
 
+        # Sources span both grounding channels: passages and cited graph facts.
         sources = [p.data_source for p in context.passages]
+        sources += [f.data_source for f in context.facts]
+        sources = list(dict.fromkeys(s for s in sources if s))  # dedupe, keep order
         answer_text = self._compose_answer(context)
-        # Confidence in the answer follows the grounding's best passage.
-        confidence = max((p.confidence.score for p in context.passages), default=0.0)
+        # Confidence follows the best grounding we have, from either channel.
+        confidence = max(
+            [p.confidence.score for p in context.passages]
+            + [f.confidence.score for f in context.facts],
+            default=0.0,
+        )
 
         answer = AnswerAsset(
             turn_id=context.turn_id,
@@ -87,16 +95,13 @@ class Narrator(FamilyMember):
         )
 
     def _compose_answer(self, context: RetrievedContextAsset) -> str:
-        if not context.passages:
+        if not context.passages and not context.facts:
             return (
                 "I couldn't find anything in Aletheia's documents that addresses that. "
                 "Try rephrasing, or ask about the architecture, the agents, or the protocols."
             )
         if self._llm.is_live:
-            context_block = "\n\n".join(
-                f"[Source: {p.data_source}]\n{p.text.text}" for p in context.passages
-            )
-            user = f"Question: {context.question}\n\nContext passages:\n{context_block}"
+            user = f"Question: {context.question}\n\n{self._context_block(context)}"
             try:
                 return self._llm.generate(system=_SYSTEM_PROMPT, user=user, max_tokens=1024)
             except Exception as exc:  # noqa: BLE001 — degrade, never hang the cascade
@@ -110,14 +115,43 @@ class Narrator(FamilyMember):
         return self._extractive(context)
 
     @staticmethod
+    def _context_block(context: RetrievedContextAsset) -> str:
+        parts: list[str] = []
+        if context.facts:
+            facts = "\n".join(
+                f"- {f.subject} {f.predicate} {f.object}. [Source: {f.data_source}]"
+                for f in context.facts
+            )
+            parts.append(f"Knowledge-graph facts:\n{facts}")
+        if context.passages:
+            passages = "\n\n".join(
+                f"[Source: {p.data_source}]\n{p.text.text}" for p in context.passages
+            )
+            parts.append(f"Document passages:\n{passages}")
+        return "\n\n".join(parts)
+
+    @staticmethod
     def _extractive(context: RetrievedContextAsset, *, live_failed: bool = False) -> str:
-        """An honest answer built directly from the top retrieved passage."""
-        top = context.passages[0]
+        """An honest answer built directly from the grounded evidence.
+
+        Graph facts come first: even with no LLM, a traversed + cited fact is a
+        real relational answer ("grounded memory, not vector vibes"). If there are
+        no facts, fall back to the top retrieved passage.
+        """
         prefix = (
             "[grounded extract — the live model was unavailable]"
             if live_failed
             else "[offline answer — no LLM configured]"
         )
+        if context.facts:
+            lines = [
+                f"{f.subject} {f.predicate} {f.object} (source: {f.data_source})."
+                for f in context.facts[:3]
+            ]
+            return (
+                f"{prefix} From Aletheia's knowledge graph:\n\n" + "\n".join(lines)
+            )
+        top = context.passages[0]
         return (
             f"{prefix} The most relevant passage in Aletheia's documents "
             f"(source: {top.data_source}) says:\n\n{top.text.text}"
