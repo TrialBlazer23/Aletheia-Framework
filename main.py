@@ -3,12 +3,13 @@
 Per the build conventions (CLAUDE.md §10): everything runs locally with one
 command.
 
-* ``python main.py``            → the Milestone 1 Q&A console (Nexus-Mind →
-                                  Archivist → Narrator over Aletheia's own docs).
-* ``python main.py --handshake`` → the Milestone 0 two-agent handshake demo.
-
-As later milestones land (the Philosopher, the Diagnostician, ...), this grows
-into the full Nexus-Mind console.
+* ``python main.py``              → the Q&A console (Nexus-Mind → Archivist →
+                                    Narrator → Philosopher, watched by the
+                                    Diagnostician, over Aletheia's own docs).
+* ``python main.py --handshake``   → the Milestone 0 two-agent handshake demo.
+* ``python main.py --diagnostics`` → the Milestone 3 immune-system demo: induce
+                                    a loop and a hung agent; watch the
+                                    Diagnostician detect, contain, and heal.
 """
 
 import sys
@@ -19,6 +20,10 @@ def main() -> None:
         from aletheia.demo.handshake_demo import main as run_handshake
 
         run_handshake()
+    elif "--diagnostics" in sys.argv:
+        from aletheia.demo.diagnostician_demo import main as run_diagnostics
+
+        run_diagnostics()
     else:
         from aletheia.app.console import main as run_console
 

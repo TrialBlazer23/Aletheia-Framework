@@ -112,3 +112,62 @@ class SdrEthicalAnalysisReport(_SdrModel):
     confidence: SdrConfidenceScore = Field(alias="Confidence")
     escalate_to_human: bool = Field(default=False, alias="Escalate_To_Human")
     metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+# --------------------------------------------------------------------------- #
+# Tier-3 — the Diagnostician's observability assets (Milestone 3)
+# `SDR_Performance_Log_Entry`, the CHOREOGRAPHY_LOG, and `SDR_Anomaly_Report`.
+# --------------------------------------------------------------------------- #
+class SdrChoreographyHop(_SdrModel):
+    """One observed message in a cascade — a `SDR_Performance_Log_Entry`.
+
+    The Diagnostician records every hop it sees so the whole cascade can be
+    replayed and timed. This is the raw material the Resonance Cycle will later
+    analyse for "System Harmony".
+    """
+
+    sequence: int = Field(alias="Sequence")  # 1-based order within the cascade
+    source_uid: str = Field(alias="Source_UID")
+    message_type: str = Field(alias="Message_Type")  # EVENT | TRIGGER | STATE_CHANGE
+    label: str = Field(alias="Label")  # event name / action / status code
+    elapsed_seconds: float = Field(alias="Elapsed_Seconds")  # since cascade start
+
+
+class SdrChoreographyLog(_SdrModel):
+    """The CHOREOGRAPHY_LOG: the Diagnostician's per-cascade telemetry asset.
+
+    A complete, timed trace of one in-flight cascade keyed by its
+    correlation/choreography id, with the agents that took part and the final
+    health verdict (COMPLETE / STALLED / LOOPED / ABORTED / OPEN).
+    """
+
+    synapse_uid: str = Field(
+        default_factory=lambda: new_uid("ASSET", "CHOREOGRAPHY_LOG"), alias="Synapse_UID"
+    )
+    correlation_id: str = Field(alias="Correlation_ID")
+    status: str = Field(alias="Status")  # OPEN | COMPLETE | STALLED | LOOPED | ABORTED
+    hop_count: int = Field(alias="Hop_Count")
+    duration_seconds: float = Field(alias="Duration_Seconds")
+    participants: list[str] = Field(default_factory=list, alias="Participants")
+    hops: list[SdrChoreographyHop] = Field(default_factory=list, alias="Hops")
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
+
+
+class SdrAnomalyReport(_SdrModel):
+    """`SDR_Anomaly_Report` — what the Diagnostician emits when it detects trouble.
+
+    Cites the affected cascade, the kind of anomaly (LOOP / STALL / …), the
+    evidence, who was involved, and the self-healing action taken.
+    """
+
+    synapse_uid: str = Field(
+        default_factory=lambda: new_uid("ASSET", "ANOMALY_REPORT"), alias="Synapse_UID"
+    )
+    correlation_id: str = Field(alias="Correlation_ID")
+    anomaly_type: str = Field(alias="Anomaly_Type")  # LOOP | STALL | DELIVERY_ERROR
+    severity: str = Field(alias="Severity")  # CRITICAL | HIGH | MEDIUM | LOW
+    description: SdrTextBlock = Field(alias="Description")
+    evidence: str = Field(alias="Evidence")
+    participants: list[str] = Field(default_factory=list, alias="Participants")
+    action_taken: str = Field(alias="Action_Taken")
+    metadata: SdrMetadataBlock = Field(alias="SDR_Metadata_Block")
