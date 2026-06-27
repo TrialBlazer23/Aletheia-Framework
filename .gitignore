@@ -1,4 +1,17 @@
-
-
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Aletheia runtime artifacts
+cascade_log.jsonl
+*.cascade.jsonl
+
+# Secrets / local env
+.env
