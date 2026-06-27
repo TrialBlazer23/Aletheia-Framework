@@ -3,8 +3,14 @@
   "//": "One-click cloud dev environment for GitHub Codespaces. On create it installs Aletheia and all its dependencies (incl. the spaCy model + knowledge graph), so `python main.py` just works.",
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
 
-  "// postCreateCommand": "Runs once when the Codespace is built. Installs the package with dev + graph extras; falls back to a direct spaCy model download if the pinned wheel is ever unreachable.",
-  "postCreateCommand": "python -m pip install --upgrade pip -q && pip install -e '.[dev,graph]' && (python -c 'import en_core_web_sm' 2>/dev/null || python -m spacy download en_core_web_sm) && echo '\\n✅ Aletheia is ready. Try:  python main.py'",
+  "// postCreateCommand": "Runs once when the Codespace is built. Installs the package + all extras and makes sure the spaCy model genuinely loads (repairing click/typer if a base image is missing them). See .devcontainer/setup.sh.",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  "// forwardPorts": "8000 is the web UI (python main.py --web); Codespaces will offer to open it in your browser.",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": { "label": "Aletheia web UI", "onAutoForward": "openPreview" }
+  },
 
   "remoteEnv": {
     "PYTHONUNBUFFERED": "1"
