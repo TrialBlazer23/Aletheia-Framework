@@ -14,10 +14,11 @@ fi
 
 cd "${CLAUDE_PROJECT_DIR:-.}"
 
-# Editable install with dev + graph extras: pydantic, pyyaml, anthropic (live
-# Claude), pytest, plus spaCy + networkx and the en_core_web_sm model (the
-# Archivist's knowledge graph). Idempotent and cache-friendly — safe to re-run.
-python -m pip install --quiet -e ".[dev,graph]"
+# Editable install with dev + graph + web extras: pydantic, pyyaml, anthropic
+# (live Claude), pytest, spaCy + networkx and the en_core_web_sm model (the
+# Archivist's knowledge graph), and FastAPI/uvicorn (the browser UI). Idempotent
+# and cache-friendly — safe to re-run.
+python -m pip install --quiet -e ".[dev,graph,web]"
 
 # Belt-and-suspenders: ensure the spaCy model is importable. If the [graph]
 # wheel URL is ever unreachable, fall back to the spaCy downloader; if that also

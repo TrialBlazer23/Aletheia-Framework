@@ -61,6 +61,8 @@ A **Codespace** is a full computer that runs in your browser — no local setup,
    ```
    Then type a question like *"What does the Philosopher enforce?"* and press Enter. Try `/create a bioluminescent deep-sea creature` for the creative cascade, or `/quit` to exit.
 
+   **Prefer a web page?** Run `python main.py --web` instead. Codespaces will pop up a notification to **Open in Browser** — that's a clean point-and-click interface where you can ask questions, request creature designs (with color-palette swatches), and watch the Domino Cascade hop between the agents. No terminal needed once it's open.
+
 **Turn on live Claude (optional).** Without a key, Aletheia runs in a free **offline mode** (it still works — it returns grounded extracts instead of Claude-composed prose). To get full Claude answers, add your Anthropic API key as a **Codespaces secret** so it's stored securely and never committed:
 * Go to **https://github.com/settings/codespaces** → **Secrets** → **New secret**.
 * **Name:** `ANTHROPIC_API_KEY`  **Value:** your key (`sk-ant-...`)  **Repository access:** select **Aletheia-Framework**.
@@ -71,6 +73,7 @@ A **Codespace** is a full computer that runs in your browser — no local setup,
 ### See it work — the milestone demos
 Each runs end-to-end and prints what's happening:
 ```bash
+python main.py --web          # a browser interface (needs: pip install -e ".[web]")
 python main.py --creative     # the full Family makes a safety-checked creative asset
 python main.py --resonance    # the system heals itself from a bad fact (Human Gavel)
 python main.py --knowledge    # answers a relational question by graph traversal

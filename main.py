@@ -20,6 +20,8 @@ command.
 * ``python main.py --creative``    → the Milestone 6 creative cascade: the whole
                                     Family (incl. the Visionary) turns a creature
                                     request into a safety-checked design package.
+* ``python main.py --web``         → a browser interface for Aletheia (needs the
+                                    ``web`` extra: ``pip install -e ".[web]"``).
 """
 
 import sys
@@ -46,6 +48,10 @@ def main() -> None:
         from aletheia.demo.creative_demo import main as run_creative
 
         run_creative()
+    elif "--web" in sys.argv:
+        from aletheia.web.app import run as run_web
+
+        run_web()
     else:
         from aletheia.app.console import main as run_console
 
